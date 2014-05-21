@@ -455,6 +455,7 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 	std::vector<wxString> groupNames;
 	std::vector<double> timeCounters;
 	int columns = 0;
+	bool CommaDelimiters = false;
 
 	wxString firstLine;
 	AllocReadLine(inFile, firstLine, lnchars); //Read a line from inFile preallocating lnchars length.
@@ -506,10 +507,12 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 
 		wxStringTokenizer tkz_names_commas(names, wxT(",")); //If it has commas, use them and nothing else.
 		wxStringTokenizer tkz_units_commas(units, wxT(","));
+
 		if (tkz_names_commas.CountTokens() > 1)
 		{
 			tkz_names = tkz_names_commas;
 			tkz_units = tkz_units_commas;
+			CommaDelimiters = true;
 		}
 
 		int count_names, count_units;
@@ -535,17 +538,18 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 		dataSets.reserve(count_names);
 		bool firstRowContainsTitles = true;
 		bool secondRowContainsUnits = true;
+		double entry;
 
 		wxDVArrayDataSet *ds = new wxDVArrayDataSet();
 		dataSets.push_back(ds);
 		wxString title = tkz_names.GetNextToken();
 		timeCounters.push_back(0.5);
-		double entry;
-		if (title.ToDouble(&entry))
+		if (IsNumeric(title) || IsDate(title))
 		{
 			firstRowContainsTitles = false;
 			ds->SetSeriesTitle(wxT("-no name-"));
 			groupNames.push_back("");
+			title.ToDouble(&entry);
 			ds->Append(wxRealPoint(timeCounters[0], entry));
 			timeCounters[0] += 1.0;
 		}
@@ -560,10 +564,11 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 		if (firstRowContainsTitles)
 		{
 			wxString units = tkz_units.GetNextToken();
-			if (units.ToDouble(&entry))
+			if (IsNumeric(units) || IsDate(units))
 			{
 				secondRowContainsUnits = false;
 				ds->SetUnits(wxT("-no units-"));
+				units.ToDouble(&entry);
 				ds->Append(wxRealPoint(timeCounters[0], entry));
 				timeCounters[0] += 1.0;
 			}
@@ -573,10 +578,10 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 //				ds->SetYLabel(title + " (" + units + ")");
 			}
 		}
-		ds->SetTimeStep(1.0);
+		ds->SetTimeStep(1.0, false);
 
 		columns = 1;
-		while(columns < count_names)
+		while (columns < count_names)
 		{
 			timeCounters.push_back(0.5);
 			wxDVArrayDataSet *ds = new wxDVArrayDataSet();
@@ -606,7 +611,7 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 				ds->Append(wxRealPoint(timeCounters[columns], entry));
 				timeCounters[columns] += 1.0;
 			}
-			ds->SetTimeStep(1.0);
+			ds->SetTimeStep(1.0, false);
 			dataSets.push_back(ds);
 			groupNames.push_back(titleToken.BeforeLast('|'));
 			columns++;
@@ -644,7 +649,14 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
                     bp = dblbuf;
                     ndbuf = 0;
 					while(*p && (*p==' '||*p=='\t'||*p==',')) p++; // skip white space and commas
-                    while(*p && (*p!=' '&&*p!='\t'&&*p!=',') && ++ndbuf < 127) *bp++ = *p++; // read in number
+					if (CommaDelimiters)
+					{
+						while (*p && *p != ',' && ++ndbuf < 127) *bp++ = *p++; // read in number
+					}
+					else
+					{
+						while (*p && (*p != ' '&&*p != '\t') && ++ndbuf < 127) *bp++ = *p++; // read in number
+					}
                     *bp = '\0'; // terminate string
 					dataSets[ncol]->Append(wxRealPoint(timeCounters[ncol], atof(dblbuf))); // convert number and add data point.
 					timeCounters[ncol] += dataSets[ncol]->GetTimeStep();
@@ -701,9 +713,9 @@ bool wxDVFileReader::FastRead(wxDVPlotCtrl *plotWin, const wxString& filename, i
 
 }
 
+//Deprecated.  Use FastRead.  This method may work if for some reason fastread is broken.
 void wxDVFileReader::ReadDataFromCSV(wxDVPlotCtrl *plotWin, const wxString& filename, wxChar separator)
 {
-	//Deprecated.  Use FastRead.  This method may work if for some reason fastread is broken.
 	wxFileInputStream infile(filename);
 	if (!infile.IsOk())
 	{
@@ -924,6 +936,68 @@ bool wxDVFileReader::Read8760WFLines(std::vector<wxDVArrayDataSet*> &dataSets, F
 		dataSets[7]->Append(wxRealPoint(currentHour, pressure));
 		dataSets[8]->Append(wxRealPoint(currentHour, winddir));
 		dataSets[9]->Append(wxRealPoint(currentHour, snowdepth));
+	}
+
+	return true;
+}
+
+bool wxDVFileReader::IsNumeric(wxString stringToCheck)
+{
+	double entry;
+	
+	if (stringToCheck.ToDouble(&entry)) { return true; }
+
+	return false;
+}
+
+bool wxDVFileReader::IsDate(wxString stringToCheck)
+{
+	char c;
+	size_t AMPMposition = 0;
+	wxString dummy = stringToCheck.Trim().Trim(false);
+
+	dummy.Replace("\t", " ");
+	dummy.Replace("\r", " ");
+	dummy.Replace("\n", " ");
+
+	while (dummy.Contains("  "))
+	{
+		dummy.Replace("  ", " ");
+	}
+
+	dummy.Replace(" /", "/");
+	dummy.Replace("/ ", "/");
+	dummy.Replace(" -", "-");
+	dummy.Replace("- ", "-");
+	dummy.Replace(" :", ":");
+	dummy.Replace(": ", ":");
+	dummy.Replace("p", "P");
+	dummy.Replace("a", "A");
+	dummy.Replace("m", "M");
+	dummy.Replace(" P", "P");
+	dummy.Replace("P ", "P");
+	dummy.Replace(" A", "A");
+	dummy.Replace("A ", "A");
+	dummy.Replace(" M", "M");
+	dummy.Replace("M ", "M");
+
+	if (dummy.length() > 22) { return false; }
+
+	std::string str = dummy.ToStdString();
+
+	for (size_t i = 0; i < str.length(); i++)
+	{
+		c = str.at(i);
+
+		if (AMPMposition = 0 && (c == 'a' || c == 'p' || c == 'm' || c == 'A' || c == 'P' || c == 'M')) { AMPMposition = i; }
+
+		if (AMPMposition > 0 && i > AMPMposition + 1) { return false; }
+
+		if (i == 0 && c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9') { return false; }
+		if (i >= 1 && i <= 2 && c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9' && c != '/' && c != '-') { return false; }
+		if (i >= 3 && i <= 4 && c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9' && c != '/' && c != '-' && c != ' ') { return false; }
+		if (i >= 5 && i <= 8 && c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9' && c != '/' && c != '-' && c != ' ' && c != ':') { return false; }
+		if (i >= 9 && c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9' && c != '/' && c != '-' && c != ' ' && c != ':' && c != 'A' && c != 'P' && c != 'M') { return false; }
 	}
 
 	return true;
