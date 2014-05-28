@@ -66,12 +66,22 @@ wxDVScatterPlotCtrl::wxDVScatterPlotCtrl(wxWindow* parent, wxWindowID id, const 
 	m_dataSelectionList = new wxDVSelectionListCtrl(this, wxID_SCATTER_DATA_SELECTOR,2,
 		wxDefaultPosition,wxDefaultSize,wxDVSEL_RADIO_FIRST_COL);
 
+	wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
+	SetSizer(mainSizer);
+
+	wxBoxSizer *optionsSizer = new wxBoxSizer(wxHORIZONTAL);
+	m_showPerfAgreeLine = new wxCheckBox(this, wxID_ANY, "Show Line of Perfect Agreement", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+	optionsSizer->Add(m_showPerfAgreeLine, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
+
 	wxBoxSizer *topSizer = new wxBoxSizer(wxHORIZONTAL);
-	topSizer->Add(m_plotSurface, 1, wxEXPAND|wxALL, 10);
+	topSizer->Add(m_plotSurface, 1, wxEXPAND | wxALL, 10);
 	topSizer->Add(m_dataSelectionList, 0, wxEXPAND, 0);
-	SetSizer(topSizer);
+
+	mainSizer->Add(optionsSizer, 0, wxEXPAND, 0);
+	mainSizer->Add(topSizer, 0, wxEXPAND, 0);
 
 	m_xDataIndex = -1;
+
 }
 
 //*** DATA SET HANDLING ***
@@ -163,7 +173,6 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 
 			wxString units = m_dataSets[m_yDataIndices[i]]->GetUnits();
 
-
 			wxPLPlotCtrl::AxisPos yap = wxPLPlotCtrl::Y_LEFT;
 			wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
 
@@ -185,6 +194,12 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 			m_plotSurface->AddPlot( p, wxPLPlotCtrl::X_BOTTOM, yap );
 			m_plotSurface->GetAxis( yap )->SetLabel( units );
 		}
+	}
+
+	if (m_showLine)
+	{
+		
+		//TODO:  code to draw line of perfect agreement based on item selected in first column of selection list control (no line if no selection)
 	}
 
 	if (m_plotSurface->GetXAxis1())
@@ -265,6 +280,17 @@ void wxDVScatterPlotCtrl::SetYSelectedNames(const wxString& names)
 }
 
 void wxDVScatterPlotCtrl::OnChannelSelection( wxCommandEvent & )
+{
+	RefreshPlot();
+}
+
+void wxDVScatterPlotCtrl::OnShowLine(wxCommandEvent& e)
+{
+	m_showLine = m_showPerfAgreeLine->GetValue();
+	RefreshPlot();
+}
+
+void wxDVScatterPlotCtrl::RefreshPlot()
 {
 	int row, col;
 	bool selected;
