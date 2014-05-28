@@ -49,10 +49,11 @@ public:
 };
 
 
-enum { wxID_SCATTER_DATA_SELECTOR = wxID_HIGHEST + 1 };
+enum { wxID_SCATTER_DATA_SELECTOR = wxID_HIGHEST + 1, wxID_PERFECT_AGREE_LINE };
 
 BEGIN_EVENT_TABLE(wxDVScatterPlotCtrl, wxPanel)
 	EVT_DVSELECTIONLIST( wxID_SCATTER_DATA_SELECTOR, wxDVScatterPlotCtrl::OnChannelSelection )
+	EVT_CHECKBOX(wxID_PERFECT_AGREE_LINE, wxDVScatterPlotCtrl::OnShowLine)
 END_EVENT_TABLE()
 
 wxDVScatterPlotCtrl::wxDVScatterPlotCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos, 
@@ -70,7 +71,7 @@ wxDVScatterPlotCtrl::wxDVScatterPlotCtrl(wxWindow* parent, wxWindowID id, const 
 	SetSizer(mainSizer);
 
 	wxBoxSizer *optionsSizer = new wxBoxSizer(wxHORIZONTAL);
-	m_showPerfAgreeLine = new wxCheckBox(this, wxID_ANY, "Show Line of Perfect Agreement", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+	m_showPerfAgreeLine = new wxCheckBox(this, wxID_PERFECT_AGREE_LINE, "Show Line of Perfect Agreement", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
 	optionsSizer->Add(m_showPerfAgreeLine, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
 
 	wxBoxSizer *topSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -82,6 +83,7 @@ wxDVScatterPlotCtrl::wxDVScatterPlotCtrl(wxWindow* parent, wxWindowID id, const 
 
 	m_xDataIndex = -1;
 
+	m_showLine = false;
 }
 
 //*** DATA SET HANDLING ***
@@ -167,6 +169,7 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 		if ( (size_t)m_yDataIndices[i] < m_dataSets.size() )
 		{
 			wxDVScatterPlot *p = new wxDVScatterPlot(m_dataSets[m_xDataIndex], m_dataSets[m_yDataIndices[i]]);
+			p->SetLineOfPerfectAgreementFlag(m_showLine);
 			p->SetLabel(m_dataSets[m_yDataIndices[i]]->GetSeriesTitle());
 			p->SetSize( 2 );
 			p->SetColour( m_dataSelectionList->GetColourForIndex(m_yDataIndices[i]) );
@@ -194,12 +197,6 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 			m_plotSurface->AddPlot( p, wxPLPlotCtrl::X_BOTTOM, yap );
 			m_plotSurface->GetAxis( yap )->SetLabel( units );
 		}
-	}
-
-	if (m_showLine)
-	{
-		
-		//TODO:  code to draw line of perfect agreement based on item selected in first column of selection list control (no line if no selection)
 	}
 
 	if (m_plotSurface->GetXAxis1())
@@ -287,7 +284,9 @@ void wxDVScatterPlotCtrl::OnChannelSelection( wxCommandEvent & )
 void wxDVScatterPlotCtrl::OnShowLine(wxCommandEvent& e)
 {
 	m_showLine = m_showPerfAgreeLine->GetValue();
-	RefreshPlot();
+	UpdatePlotWithChannelSelections();
+	m_plotSurface->Invalidate();
+	m_plotSurface->Refresh();
 }
 
 void wxDVScatterPlotCtrl::RefreshPlot()
