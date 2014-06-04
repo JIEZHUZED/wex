@@ -521,7 +521,11 @@ void wxDVProfileCtrl::ShowPlotAtIndex( int i )
 {
 	if ( i < 0 || i >= m_plots.size() ) return;
 
-	m_plots[i]->CalculateProfileData(); 
+	wxString YLabelText;
+	size_t NumY1AxisSelections = 0;
+	size_t NumY2AxisSelections = 0;
+
+	m_plots[i]->CalculateProfileData();
 	
 	wxPLPlotCtrl::AxisPos yap = wxPLPlotCtrl::Y_LEFT;
 	double yaxisMax=0, yaxisMin=0;
@@ -536,10 +540,10 @@ void wxDVProfileCtrl::ShowPlotAtIndex( int i )
 		wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
 
 		if ( m_plotSurfaces[j]->GetYAxis1() )
-			y1Units = m_plotSurfaces[j]->GetYAxis1()->GetLabel();
+			y1Units = m_plotSurfaces[j]->GetYAxis1()->GetUnits();
 
 		if ( m_plotSurfaces[j]->GetYAxis2() )
-			y2Units = m_plotSurfaces[j]->GetYAxis2()->GetLabel();
+			y2Units = m_plotSurfaces[j]->GetYAxis2()->GetUnits();
 
 		if ( m_plotSurfaces[j]->GetYAxis1() && y1Units == units )
 			yap = wxPLPlotCtrl::Y_LEFT;
@@ -551,7 +555,28 @@ void wxDVProfileCtrl::ShowPlotAtIndex( int i )
 			yap = wxPLPlotCtrl::Y_RIGHT;
 
 		m_plotSurfaces[j]->AddPlot(  m_plots[i]->plots[j], wxPLPlotCtrl::X_BOTTOM, yap );
-		m_plotSurfaces[j]->GetAxis( yap )->SetLabel( units );
+		m_plotSurfaces[j]->GetAxis(yap)->SetUnits(units);
+
+		YLabelText = units;
+		for (size_t i = 0; i < m_dataSelector->Length(); i++)
+		{
+			if (m_dataSelector->IsSelected(i, 0) && m_plots[i]->dataset->GetUnits() == units)
+			{
+				if (yap == wxPLPlotCtrl::Y_LEFT)
+				{
+					NumY1AxisSelections++;
+				}
+				else
+				{
+					NumY2AxisSelections++;
+				}
+			}
+		}
+		if ((NumY1AxisSelections == 1 && yap == wxPLPlotCtrl::Y_LEFT) || (NumY2AxisSelections == 1 && yap == wxPLPlotCtrl::Y_RIGHT))
+		{
+			YLabelText = m_plots[i]->dataset->GetLabel();
+		}
+		m_plotSurfaces[j]->GetAxis(yap)->SetLabel(YLabelText);
 
 		m_plotSurfaces[j]->GetXAxis1()->SetWorld(0, 24);
 		m_plotSurfaces[j]->GetXAxis1()->ShowLabel( false );
@@ -570,7 +595,6 @@ void wxDVProfileCtrl::ShowPlotAtIndex( int i )
 		&& m_plotSurfaces[0]->GetYAxis2()->GetLabel() != m_plotSurfaces[0]->GetYAxis1()->GetLabel())
 		m_rightAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis2()->GetLabel(), 270);
 
-
 	AutoScaleYAxes();
 	RefreshDisabledCheckBoxes();
 
@@ -584,6 +608,14 @@ void wxDVProfileCtrl::HidePlotAtIndex(int i, bool update)
 	if (i < 0 || i >= m_plots.size())
 		return;
 	
+	wxString YLabelText;
+	size_t NumY1AxisSelections = 0;
+	size_t NumY2AxisSelections = 0;
+	wxString units = m_plots[i]->dataset->GetUnits();
+	wxPLPlotCtrl::AxisPos yap = wxPLPlotCtrl::Y_LEFT;
+	wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
+	int SelIndex = -1;
+
 	std::vector<int> currently_shown = m_dataSelector->GetSelectionsInCol();
 	bool keepAxis = false;
 	for (int j=0; j<currently_shown.size(); j++)
@@ -656,6 +688,50 @@ void wxDVProfileCtrl::HidePlotAtIndex(int i, bool update)
 				m_rightAxisLabel->SetLabelText( wxEmptyString, 90);
 		}
 	}
+	else
+	{
+		for (int j = 0; j < 13; j++)
+		{
+			if (m_plotSurfaces[j]->GetYAxis1())
+				y1Units = m_plotSurfaces[j]->GetYAxis1()->GetUnits();
+
+			if (m_plotSurfaces[j]->GetYAxis2())
+				y2Units = m_plotSurfaces[j]->GetYAxis2()->GetUnits();
+
+			if (m_plotSurfaces[j]->GetYAxis1() && y1Units == units)
+				yap = wxPLPlotCtrl::Y_LEFT;
+			else if (m_plotSurfaces[j]->GetYAxis2() && y2Units == units)
+				yap = wxPLPlotCtrl::Y_RIGHT;
+			else if (m_plotSurfaces[j]->GetYAxis1() == 0)
+				yap = wxPLPlotCtrl::Y_LEFT;
+			else
+				yap = wxPLPlotCtrl::Y_RIGHT;
+
+			YLabelText = units;
+			for (size_t i = 0; i < m_dataSelector->Length(); i++)
+			{
+				if (m_dataSelector->IsSelected(i, 0) && m_plots[i]->dataset->GetUnits() == units)
+				{
+					SelIndex = i;
+					if (yap == wxPLPlotCtrl::Y_LEFT)
+					{
+						NumY1AxisSelections++;
+					}
+					else
+					{
+						NumY2AxisSelections++;
+					}
+				}
+			}
+			if (SelIndex > -1 && ((NumY1AxisSelections == 1 && yap == wxPLPlotCtrl::Y_LEFT) || (NumY2AxisSelections == 1 && yap == wxPLPlotCtrl::Y_RIGHT))) { YLabelText = m_plots[SelIndex]->dataset->GetLabel(); }
+			m_plotSurfaces[j]->GetAxis(yap)->SetLabel(YLabelText);
+		}
+
+		m_leftAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis1()->GetLabel(), 90);
+		if (m_plotSurfaces[0]->GetYAxis2()
+			&& m_plotSurfaces[0]->GetYAxis2()->GetLabel() != m_plotSurfaces[0]->GetYAxis1()->GetLabel())
+			m_rightAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis2()->GetLabel(), 270);
+	}
 
 	AutoScaleYAxes();
 	RefreshDisabledCheckBoxes();
@@ -663,11 +739,8 @@ void wxDVProfileCtrl::HidePlotAtIndex(int i, bool update)
 	for (int j=0; j<13; j++)
 		m_plotSurfaces[j]->RemovePlot( m_plots[i]->plots[j] );
 
-	if (update)
-	{
-		Refresh();
-		Layout();
-	}
+	Refresh();
+	Layout();
 }
 
 void wxDVProfileCtrl::HideAllPlots(bool update)
