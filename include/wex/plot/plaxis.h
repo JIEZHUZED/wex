@@ -46,7 +46,9 @@ public:
 	
 	virtual void SetLabel( const wxString &s ) { m_label = s; }
 	virtual wxString GetLabel() { return m_label; }
-	virtual void SetColour( const wxColour &col ) { m_colour = col; }
+	virtual void SetUnits(const wxString &s) { m_units = s; }
+	virtual wxString GetUnits() { return m_units; }
+	virtual void SetColour(const wxColour &col) { m_colour = col; }
 	virtual wxColour GetColour() { return m_colour; }
 	
 	void SetTickSizes( int smallsz, int largesz ) { m_smallTickSize = smallsz; m_largeTickSize = largesz; }
@@ -63,6 +65,7 @@ protected:
 	void Init();
 	
 	wxString m_label;
+	wxString m_units;
 	wxColour m_colour;
 	double m_min;
 	double m_max;

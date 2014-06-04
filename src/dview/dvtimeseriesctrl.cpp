@@ -1487,43 +1487,70 @@ void wxDVTimeSeriesCtrl::AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos pPo
 	if (index < 0 || index >= (int)m_plots.size()) return;
 
 	size_t idx = (size_t)index;
+	wxString YLabelText;
 
 	//Set our line colour correctly.  Assigned by data selection window.
 	m_plots[idx]->SetColour(m_dataSelector->GetColourForIndex(index) );
 	
 	wxPLPlotCtrl::AxisPos yap = wxPLPlotCtrl::Y_LEFT;
 	wxString units = m_plots[idx]->GetDataSet()->GetUnits();
-
 		
 	wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
 
-	if ( m_plotSurface->GetYAxis1( pPos ) )
-		y1Units = m_plotSurface->GetYAxis1( pPos )->GetLabel();
+	if (m_plotSurface->GetYAxis1(pPos))
+	{
+		y1Units = m_plotSurface->GetYAxis1(pPos)->GetUnits();
+	}
 
-	if ( m_plotSurface->GetYAxis2( pPos ) )
-		y2Units = m_plotSurface->GetYAxis2( pPos )->GetLabel();
+	if (m_plotSurface->GetYAxis2(pPos))
+	{
+		y2Units = m_plotSurface->GetYAxis2(pPos)->GetUnits();
+	}
 
-	if ( m_plotSurface->GetYAxis1( pPos ) && y1Units == units )
+	if (m_plotSurface->GetYAxis1(pPos) && y1Units == units)
+	{
 		yap = wxPLPlotCtrl::Y_LEFT;
-	else if ( m_plotSurface->GetYAxis2( pPos ) && y2Units == units )
+	}
+	else if (m_plotSurface->GetYAxis2(pPos) && y2Units == units)
+	{
 		yap = wxPLPlotCtrl::Y_RIGHT;
-	else if ( m_plotSurface->GetYAxis1( pPos ) == 0 )
+	}
+	else if (m_plotSurface->GetYAxis1(pPos) == 0)
+	{
 		yap = wxPLPlotCtrl::Y_LEFT;
+	}
 	else
+	{
 		yap = wxPLPlotCtrl::Y_RIGHT;
+	}
 	
 	m_plotSurface->AddPlot( m_plots[index], wxPLPlotCtrl::X_BOTTOM, yap, pPos, false );
-	m_plotSurface->GetAxis( yap, pPos )->SetLabel( units );
+	m_plotSurface->GetAxis(yap, pPos)->SetUnits(units);
 		
 	//Calculate index from 0-3.  0,1 are top graph L,R axis.  2,3 are L,R axis on bottom graph.
 	int graphIndex = TOP_LEFT_AXIS;
 	if (pPos == wxPLPlotCtrl::PLOT_BOTTOM)
+	{
 		graphIndex += 2;
+	}
 	if (yap == wxPLPlotCtrl::Y_RIGHT)
+	{
 		graphIndex += 1;
+	}
 
 	m_selectedChannelIndices[graphIndex]->push_back(idx);
-	
+
+	YLabelText = units;
+	if ((pPos == wxPLPlotCtrl::PLOT_TOP && m_selectedChannelIndices[0]->size() == 1 && yap == wxPLPlotCtrl::Y_LEFT)
+		|| (pPos == wxPLPlotCtrl::PLOT_TOP && m_selectedChannelIndices[1]->size() == 1 && yap == wxPLPlotCtrl::Y_RIGHT)
+		|| (pPos == wxPLPlotCtrl::PLOT_BOTTOM && m_selectedChannelIndices[2]->size() == 1 && yap == wxPLPlotCtrl::Y_LEFT)
+		|| (pPos == wxPLPlotCtrl::PLOT_BOTTOM && m_selectedChannelIndices[3]->size() == 1 && yap == wxPLPlotCtrl::Y_RIGHT)
+		)
+	{ 
+		YLabelText = m_plots[idx]->GetDataSet()->GetLabel(); 
+	}
+	m_plotSurface->GetAxis(yap, pPos)->SetLabel(YLabelText);
+
 	switch(yap)
 	{
 	case wxPLPlotCtrl::Y_LEFT:
@@ -1543,6 +1570,10 @@ void wxDVTimeSeriesCtrl::RemoveGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos 
 	//Find our GraphAxisPosition, and remove from selected indices list.
 	//Have to do it this way because of ambiguous use of int in an array storing ints.
 	int graphIndex = 0;
+	wxString YLabelText;
+	wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
+	wxPLPlotCtrl::AxisPos yap = wxPLPlotCtrl::Y_LEFT;
+
 	if (pPos == wxPLPlotCtrl::PLOT_BOTTOM)
 		graphIndex += 2;
 	for (int i = graphIndex; i < graphIndex+2; i++)
@@ -1621,6 +1652,50 @@ void wxDVTimeSeriesCtrl::RemoveGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos 
 	else
 	{
 		AutoscaleYAxis(axisThatWasUsed, *m_selectedChannelIndices[graphIndex], true); //Pass true in case we removed a tall graph from a shorter one.
+
+		if (index >= 0 && index < (int)m_plots.size())
+		{
+			size_t idx = (size_t)index;
+			YLabelText = m_plots[idx]->GetDataSet()->GetUnits();
+
+			if (m_plotSurface->GetYAxis1(pPos))
+			{
+				y1Units = m_plotSurface->GetYAxis1(pPos)->GetUnits();
+			}
+
+			if (m_plotSurface->GetYAxis2(pPos))
+			{
+				y2Units = m_plotSurface->GetYAxis2(pPos)->GetUnits();
+			}
+
+			if (m_plotSurface->GetYAxis1(pPos) && y1Units == YLabelText)
+			{
+				yap = wxPLPlotCtrl::Y_LEFT;
+			}
+			else if (m_plotSurface->GetYAxis2(pPos) && y2Units == YLabelText)
+			{
+				yap = wxPLPlotCtrl::Y_RIGHT;
+			}
+			else if (m_plotSurface->GetYAxis1(pPos) == 0)
+			{
+				yap = wxPLPlotCtrl::Y_LEFT;
+			}
+			else
+			{
+				yap = wxPLPlotCtrl::Y_RIGHT;
+			}
+
+			if ((pPos == wxPLPlotCtrl::PLOT_TOP && m_selectedChannelIndices[0]->size() == 1 && yap == wxPLPlotCtrl::Y_LEFT)
+				|| (pPos == wxPLPlotCtrl::PLOT_TOP && m_selectedChannelIndices[1]->size() == 1 && yap == wxPLPlotCtrl::Y_RIGHT)
+				|| (pPos == wxPLPlotCtrl::PLOT_BOTTOM && m_selectedChannelIndices[2]->size() == 1 && yap == wxPLPlotCtrl::Y_LEFT)
+				|| (pPos == wxPLPlotCtrl::PLOT_BOTTOM && m_selectedChannelIndices[3]->size() == 1 && yap == wxPLPlotCtrl::Y_RIGHT)
+				)
+			{
+				YLabelText = m_plots[idx]->GetDataSet()->GetLabel();
+			}
+		}
+
+		m_plotSurface->GetAxis(yap, pPos)->SetLabel(YLabelText);
 	}
 
 	RefreshDisabledCheckBoxes();
@@ -1661,9 +1736,9 @@ void wxDVTimeSeriesCtrl::RefreshDisabledCheckBoxes(wxPLPlotCtrl::PlotPos pPos)
 	wxString axis2Label = NO_UNITS;
 	
 	if(m_plotSurface->GetYAxis1(pPos))
-		axis1Label = m_plotSurface->GetYAxis1(pPos)->GetLabel();
+		axis1Label = m_plotSurface->GetYAxis1(pPos)->GetUnits();
 	if (m_plotSurface->GetYAxis2(pPos))
-		axis2Label = m_plotSurface->GetYAxis2(pPos)->GetLabel();
+		axis2Label = m_plotSurface->GetYAxis2(pPos)->GetUnits();
 
 	if (axis1Label != NO_UNITS
 		&& axis2Label != NO_UNITS

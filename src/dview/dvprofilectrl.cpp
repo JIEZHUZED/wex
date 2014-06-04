@@ -96,6 +96,7 @@ class wxDVProfileCtrl::VerticalLabelCtrl: public wxWindow
 private:
 	wxString m_label;
 	static const int border_space = 2;
+	double TextRotationAngle;
 public:
 	VerticalLabelCtrl(wxWindow* parent, wxWindowID id)
 		: wxWindow(parent, id)
@@ -110,9 +111,10 @@ public:
 		return wxSize(height+2*border_space, width+2*border_space);
 	}
 
-	void SetLabelText(const wxString& text)
+	void SetLabelText(const wxString& text, double textRotationAngle)
 	{
 		m_label = text;
+		TextRotationAngle = textRotationAngle;
 		InvalidateBestSize();
 	}
 
@@ -133,7 +135,9 @@ public:
 		wxCoord width, height;
 		pdc.GetTextExtent(label, &width, &height);	
 		pdc.SetTextForeground( GetForegroundColour() );
-		pdc.DrawRotatedText( label , border_space, client.GetHeight()/2+width/2, 90);
+
+		int padding = border_space + (TextRotationAngle == 270 ? 12 : 0);
+		pdc.DrawRotatedText(label, padding, client.GetHeight() / 2 + width / 2, TextRotationAngle);
 	}
 	
 	void OnSize( wxSizeEvent & )
@@ -561,10 +565,10 @@ void wxDVProfileCtrl::ShowPlotAtIndex( int i )
 	for(int j=0; j<13; j++)
 		m_plotSurfaces[j]->GetAxis(yap)->SetWorld(yaxisMin, yaxisMax);
 
-	m_leftAxisLabel->SetLabelText( m_plotSurfaces[0]->GetYAxis1()->GetLabel());
+	m_leftAxisLabel->SetLabelText( m_plotSurfaces[0]->GetYAxis1()->GetLabel(), 90);
 	if (m_plotSurfaces[0]->GetYAxis2() 
 		&& m_plotSurfaces[0]->GetYAxis2()->GetLabel() != m_plotSurfaces[0]->GetYAxis1()->GetLabel())
-		m_rightAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis2()->GetLabel());
+		m_rightAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis2()->GetLabel(), 270);
 
 
 	AutoScaleYAxes();
@@ -603,8 +607,8 @@ void wxDVProfileCtrl::HidePlotAtIndex(int i, bool update)
 				m_plotSurfaces[k]->SetYAxis2( 0 );
 			}
 
-			m_leftAxisLabel->SetLabelText( wxEmptyString );
-			m_rightAxisLabel->SetLabelText( wxEmptyString );
+			m_leftAxisLabel->SetLabelText( wxEmptyString, 90 );
+			m_rightAxisLabel->SetLabelText( wxEmptyString, 90 );
 		}
 		else
 		{
@@ -645,11 +649,11 @@ void wxDVProfileCtrl::HidePlotAtIndex(int i, bool update)
 			for (int k=0; k<13; k++)
 				m_plotSurfaces[k]->SetYAxis2( 0 );
 
-			m_leftAxisLabel->SetLabelText( m_plotSurfaces[0]->GetYAxis1()->GetLabel() );
+			m_leftAxisLabel->SetLabelText( m_plotSurfaces[0]->GetYAxis1()->GetLabel(), 90 );
 			if (m_plotSurfaces[0]->GetYAxis2())
-				m_rightAxisLabel->SetLabelText( m_plotSurfaces[0]->GetYAxis2()->GetLabel() );
+				m_rightAxisLabel->SetLabelText( m_plotSurfaces[0]->GetYAxis2()->GetLabel(), 270 );
 			else
-				m_rightAxisLabel->SetLabelText( wxEmptyString);
+				m_rightAxisLabel->SetLabelText( wxEmptyString, 90);
 		}
 	}
 
@@ -678,8 +682,8 @@ void wxDVProfileCtrl::HideAllPlots(bool update)
 		m_plotSurfaces[k]->SetYAxis2( 0 );
 	}
 
-	m_leftAxisLabel->SetLabelText( wxEmptyString );
-	m_rightAxisLabel->SetLabelText( wxEmptyString );
+	m_leftAxisLabel->SetLabelText( wxEmptyString, 90 );
+	m_rightAxisLabel->SetLabelText( wxEmptyString, 90 );
 
 	RefreshDisabledCheckBoxes();
 

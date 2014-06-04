@@ -164,6 +164,10 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 	if (m_xDataIndex < 0 || (size_t)m_xDataIndex >= m_dataSets.size())
 		return;
 
+	wxString YLabelText;
+	size_t NumY1AxisSelections = 0;
+	size_t NumY2AxisSelections = 0;
+
 	for (size_t i=0; i<m_yDataIndices.size(); i++)
 	{
 		if ( (size_t)m_yDataIndices[i] < m_dataSets.size() )
@@ -179,23 +183,43 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 			wxPLPlotCtrl::AxisPos yap = wxPLPlotCtrl::Y_LEFT;
 			wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
 
-			if ( m_plotSurface->GetYAxis1() )
-				y1Units = m_plotSurface->GetYAxis1()->GetLabel();
+			if (m_plotSurface->GetYAxis1())
+			{
+				y1Units = m_plotSurface->GetYAxis1()->GetUnits();
+			}
 
-			if ( m_plotSurface->GetYAxis2() )
-				y2Units = m_plotSurface->GetYAxis2()->GetLabel();
+			if (m_plotSurface->GetYAxis2())
+			{
+				y2Units = m_plotSurface->GetYAxis2()->GetUnits();
+			}
 
-			if ( m_plotSurface->GetYAxis1() && y1Units == units )
+			if (m_plotSurface->GetYAxis1() && y1Units == units)
+			{
 				yap = wxPLPlotCtrl::Y_LEFT;
-			else if ( m_plotSurface->GetYAxis2() && y2Units == units )
+				NumY1AxisSelections++;
+			}
+			else if (m_plotSurface->GetYAxis2() && y2Units == units)
+			{
 				yap = wxPLPlotCtrl::Y_RIGHT;
-			else if ( m_plotSurface->GetYAxis1() == 0 )
+				NumY2AxisSelections++;
+			}
+			else if (m_plotSurface->GetYAxis1() == 0)
+			{
 				yap = wxPLPlotCtrl::Y_LEFT;
+				NumY1AxisSelections++;
+			}
 			else
+			{
 				yap = wxPLPlotCtrl::Y_RIGHT;
+				NumY2AxisSelections++;
+			}
 
 			m_plotSurface->AddPlot( p, wxPLPlotCtrl::X_BOTTOM, yap );
-			m_plotSurface->GetAxis( yap )->SetLabel( units );
+
+			m_plotSurface->GetAxis(yap)->SetUnits(units);
+			YLabelText = units;
+			if ((NumY1AxisSelections == 1 && yap == wxPLPlotCtrl::Y_LEFT) || (NumY2AxisSelections == 1 && yap == wxPLPlotCtrl::Y_RIGHT)) { YLabelText = m_dataSets[m_yDataIndices[i]]->GetLabel(); }
+			m_plotSurface->GetAxis(yap)->SetLabel(YLabelText);
 		}
 	}
 
@@ -210,9 +234,9 @@ void wxDVScatterPlotCtrl::RefreshDisabledCheckBoxes()
 	wxString axis2Label = NO_UNITS;
 
 	if (m_plotSurface->GetYAxis1())
-		axis1Label = m_plotSurface->GetYAxis1()->GetLabel();
+		axis1Label = m_plotSurface->GetYAxis1()->GetUnits();
 	if (m_plotSurface->GetYAxis2())
-		axis2Label = m_plotSurface->GetYAxis2()->GetLabel();
+		axis2Label = m_plotSurface->GetYAxis2()->GetUnits();
 
 	if (axis1Label != NO_UNITS
 		&& axis2Label != NO_UNITS
