@@ -196,28 +196,35 @@ void wxDVScatterPlotCtrl::UpdatePlotWithChannelSelections()
 			if (m_plotSurface->GetYAxis1() && y1Units == units)
 			{
 				yap = wxPLPlotCtrl::Y_LEFT;
-				NumY1AxisSelections++;
 			}
 			else if (m_plotSurface->GetYAxis2() && y2Units == units)
 			{
 				yap = wxPLPlotCtrl::Y_RIGHT;
-				NumY2AxisSelections++;
 			}
 			else if (m_plotSurface->GetYAxis1() == 0)
 			{
 				yap = wxPLPlotCtrl::Y_LEFT;
-				NumY1AxisSelections++;
 			}
 			else
 			{
 				yap = wxPLPlotCtrl::Y_RIGHT;
-				NumY2AxisSelections++;
 			}
 
 			m_plotSurface->AddPlot( p, wxPLPlotCtrl::X_BOTTOM, yap );
 
 			m_plotSurface->GetAxis(yap)->SetUnits(units);
 			YLabelText = units;
+			if (m_dataSelectionList->IsSelected(m_yDataIndices[i], 1) && m_dataSets[m_yDataIndices[i]]->GetUnits() == units)
+			{
+				if (yap == wxPLPlotCtrl::Y_LEFT)
+				{
+					NumY1AxisSelections++;
+				}
+				else
+				{
+					NumY2AxisSelections++;
+				}
+			}
 			if ((NumY1AxisSelections == 1 && yap == wxPLPlotCtrl::Y_LEFT) || (NumY2AxisSelections == 1 && yap == wxPLPlotCtrl::Y_RIGHT)) { YLabelText = m_dataSets[m_yDataIndices[i]]->GetLabel(); }
 			m_plotSurface->GetAxis(yap)->SetLabel(YLabelText);
 		}
