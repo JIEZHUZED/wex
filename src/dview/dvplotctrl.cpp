@@ -534,10 +534,9 @@ void wxDVPlotCtrl::SelectDataOnBlankTabs()
 			m_durationCurve->SelectDataSetAtIndex(0);
 	}
 
-	if (m_scatterPlot->GetScatterSelectionList()->GetSelectedNamesInCol(0).size() == 0)
-		m_scatterPlot->SelectXDataAtIndex(0);
-	if (m_scatterPlot->GetScatterSelectionList()->GetSelectedNamesInCol(1).size() == 0)
-		m_scatterPlot->SelectYDataAtIndex(0);
+	wxDVSelectionListCtrl *SelList = m_scatterPlot->GetScatterSelectionList();
+	if (SelList->GetSelectedNamesInCol(0).size() == 0) { m_scatterPlot->SelectXDataAtIndex(0); }
+	if (SelList->GetSelectedNamesInCol(1).size() == 0) { m_scatterPlot->SelectYDataAtIndex(SelList->GetUnsortedRowIndex(1)); }
 
 	//NOTE:  Statistics Table does not allow selection of an individual dataset
 }
