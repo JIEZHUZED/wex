@@ -243,7 +243,8 @@ wxDVPlotCtrlSettings wxDVPlotCtrl::GetPerspective()
 	settings.SetProperty(wxT("tsBottomSelectedNames"), m_monthlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1));
 
 	//***DMap Tap Properties***
-	settings.SetProperty(wxT("dmapCurrentName"), m_dMap->GetCurrentDataName());
+	settings.SetProperty(wxT("dmapTopCurrentName"), m_dMap->GetCurrentDataName(wxPLPlotCtrl::PLOT_TOP));
+	settings.SetProperty(wxT("dmapBottomCurrentName"), m_dMap->GetCurrentDataName(wxPLPlotCtrl::PLOT_BOTTOM));
 	settings.SetProperty(wxT("dmapZMin"), m_dMap->GetZMin());
 	settings.SetProperty(wxT("dmapZMax"), m_dMap->GetZMax());
 	settings.SetProperty(wxT("dmapXMin"), m_dMap->GetXMin());
@@ -329,7 +330,8 @@ void wxDVPlotCtrl::SetPerspective(wxDVPlotCtrlSettings& settings)
 	
 
 	//***DMap Tab Properties***
-	m_dMap->SetCurrentDataName(settings.GetProperty(wxT("dmapCurrentName")));
+	m_dMap->SetCurrentDataName(settings.GetProperty(wxT("dmapTopCurrentName")), wxPLPlotCtrl::PLOT_TOP);
+	m_dMap->SetCurrentDataName(settings.GetProperty(wxT("dmapBottomCurrentName")), wxPLPlotCtrl::PLOT_BOTTOM);
 	m_dMap->SetColourMapName(settings.GetProperty(wxT("dmapColourMap"))); //Do this before setting z min/max.
 
 	settings.GetProperty(wxT("dmapZMin")).ToDouble(&min);
@@ -411,7 +413,7 @@ void wxDVPlotCtrl::SelectDataIndex(int index, bool allTabs)
 	m_hourlyTimeSeries->SelectDataSetAtIndex(index);
 	m_dailyTimeSeries->SelectDataSetAtIndex(index);
 	m_monthlyTimeSeries->SelectDataSetAtIndex(index);
-	m_dMap->SelectDataSetAtIndex(index);
+	m_dMap->SelectDataSetAtIndex(index, wxPLPlotCtrl::PLOT_TOP);	//If this tab has two datasets selected we return the one associated with the top plot
 	m_profilePlots->SelectDataSetAtIndex(index);
 	if (allTabs)
 	{
@@ -442,7 +444,7 @@ void wxDVPlotCtrl::SelectDataIndexOnTab(int index, int tab)
 		m_monthlyTimeSeries->SelectDataSetAtIndex(index);
 		break;
 	case TAB_DMAP:
-		m_dMap->SelectDataSetAtIndex(index);
+		m_dMap->SelectDataSetAtIndex(index, wxPLPlotCtrl::PLOT_TOP);	//If this tab has two datasets selected we return the one associated with the top plot
 		break;
 	case TAB_PROFILE:
 		m_profilePlots->SelectDataSetAtIndex(index);
@@ -519,8 +521,8 @@ void wxDVPlotCtrl::SelectDataOnBlankTabs()
 		&& m_monthlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0 )
 		m_monthlyTimeSeries->SelectDataSetAtIndex(0);
 
-	if (m_dMap->GetCurrentDataName().size() == 0)
-		m_dMap->SelectDataSetAtIndex(0);
+	if (m_dMap->GetCurrentDataName(wxPLPlotCtrl::PLOT_TOP).size() == 0)
+		m_dMap->SelectDataSetAtIndex(0, wxPLPlotCtrl::PLOT_TOP);
 
 	if (m_profilePlots->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0)
 		m_profilePlots->SelectDataSetAtIndex(0);

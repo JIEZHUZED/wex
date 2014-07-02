@@ -16,6 +16,7 @@
 #include "wex/icons/zoom_out.cpng"
 #include "wex/icons/zoom_fit.cpng"
 
+static const wxString NO_UNITS("ThereAreNoUnitsForThisAxis.");
 
 class wxDVDMapPlot : public wxPLPlottable
 {
@@ -110,7 +111,7 @@ public:
 };
 
 enum {
-	ID_DATA_SELECTOR_CHOICE = wxID_HIGHEST + 1, 
+	ID_DATA_CHANNEL_SELECTOR = wxID_HIGHEST + 1,
 	ID_COLOURMAP_SELECTOR_CHOICE, ID_GRAPH_SCROLLBAR, ID_GRAPH_Y_SCROLLBAR,
 	ID_MIN_Z_INPUT, ID_MAX_Z_INPUT, ID_DMAP_SURFACE, ID_SYNC_CHECK, ID_RESET_MIN_MAX};
 
@@ -118,7 +119,7 @@ static const double MIN_ZOOM_LENGTH = 7 * 24;
 
 BEGIN_EVENT_TABLE(wxDVDMapCtrl, wxPanel)
 	
-	EVT_CHOICE(ID_DATA_SELECTOR_CHOICE, wxDVDMapCtrl::OnDataComboBox)
+	EVT_DVSELECTIONLIST(ID_DATA_CHANNEL_SELECTOR, wxDVDMapCtrl::OnDataChannelSelection)
 	EVT_CHOICE(ID_COLOURMAP_SELECTOR_CHOICE, wxDVDMapCtrl::OnColourMapSelection)
 
 	EVT_TEXT_ENTER(ID_MIN_Z_INPUT, wxDVDMapCtrl::OnColourMapMinChanged)
@@ -153,7 +154,8 @@ wxDVDMapCtrl::wxDVDMapCtrl(wxWindow* parent, wxWindowID id,
 						   const wxPoint& pos, const wxSize& size)
 	: wxPanel(parent, id, pos, size, wxTAB_TRAVERSAL)
 {
-	m_currentlyShownDataSet = 0;
+	m_currentlyShownDataSetTop = 0;
+	m_currentlyShownDataSetBottom = 0;
 
 	m_colourMap = new wxDVCoarseRainbowColourMap(0, 24);
 
@@ -171,12 +173,15 @@ wxDVDMapCtrl::wxDVDMapCtrl(wxWindow* parent, wxWindowID id,
 	m_plotSurface->SetXAxis1( m_xAxis );
 	m_plotSurface->SetYAxis1( m_yAxis );
 
-	m_dmap = new wxDVDMapPlot;	
-	m_dmap->SetColourMap( m_colourMap );
-	m_plotSurface->AddPlot( m_dmap );
+	m_dmapTop = new wxDVDMapPlot;	
+	m_dmapTop->SetColourMap( m_colourMap );
+	m_plotSurface->AddPlot( m_dmapTop );
 
+	m_dmapBottom = new wxDVDMapPlot;
+	m_dmapBottom->SetColourMap(m_colourMap);
+	m_plotSurface->AddPlot(m_dmapBottom);
 	
-	m_dataSelector = new wxChoice(this, ID_DATA_SELECTOR_CHOICE, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_SORT);
+	m_dataSelector = new wxDVSelectionListCtrl(this, ID_DATA_CHANNEL_SELECTOR, 1, wxDefaultPosition, wxDefaultSize, 3);	//TODO:  change num_columns back to 2 when get second graph working
 	m_syncCheck = new wxCheckBox(this, ID_SYNC_CHECK, "Synchronize with Time Series");
 	m_minTextBox = new wxTextCtrl(this, ID_MIN_Z_INPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	m_maxTextBox = new wxTextCtrl(this, ID_MAX_Z_INPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -197,19 +202,13 @@ wxDVDMapCtrl::wxDVDMapCtrl(wxWindow* parent, wxWindowID id,
 	wxBitmapButton *zoom_fit = new wxBitmapButton( this, wxID_ZOOM_FIT, wxBITMAP_PNG_FROM_DATA( zoom_fit ));
 	zoom_fit->SetToolTip("Zoom fit");
 
-
 	wxBoxSizer *scrollSizer = new wxBoxSizer(wxHORIZONTAL);
 	scrollSizer->Add( m_xGraphScroller, 1, wxALL|wxALIGN_CENTER_VERTICAL, 2 );
 	scrollSizer->Add( zoom_in, 0, wxALL|wxEXPAND, 1);
 	scrollSizer->Add( zoom_out, 0, wxALL|wxEXPAND, 1);
 	scrollSizer->Add( zoom_fit , 0, wxALL|wxEXPAND, 1);
-
-	wxBoxSizer *horizPlotSizer = new wxBoxSizer(wxHORIZONTAL);
-	horizPlotSizer->Add( m_plotSurface, 1, wxEXPAND|wxALL, 4);
-	horizPlotSizer->Add( m_yGraphScroller, 0, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 2);
 		
 	wxBoxSizer *optionsSizer = new wxBoxSizer(wxHORIZONTAL);
-	optionsSizer->Add(m_dataSelector, 0, wxALL|wxEXPAND, 3);
 	optionsSizer->Add(m_syncCheck, 0, wxALL|wxEXPAND, 3);
 	optionsSizer->AddStretchSpacer();
 	optionsSizer->Add(new wxStaticText(this, wxID_ANY, "Min:"), 0, wxALIGN_CENTER|wxALIGN_CENTER_VERTICAL, 4);
@@ -219,10 +218,18 @@ wxDVDMapCtrl::wxDVDMapCtrl(wxWindow* parent, wxWindowID id,
 	optionsSizer->Add(new wxButton(this, ID_RESET_MIN_MAX, "Reset Min/Max"), 0, wxALIGN_CENTER | wxRIGHT, 5);
 	optionsSizer->Add(m_colourMapSelector, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND|wxALIGN_RIGHT, 3);
 
-	wxBoxSizer *mainSizer = new wxBoxSizer( wxVERTICAL );
-	mainSizer->Add( optionsSizer, 0, wxEXPAND, 2 );
-	mainSizer->Add( horizPlotSizer, 1, wxEXPAND, 0 );
-	mainSizer->Add( scrollSizer, 0, wxEXPAND, 0 );
+	wxBoxSizer *horizPlotSizer = new wxBoxSizer(wxHORIZONTAL);
+	horizPlotSizer->Add(m_plotSurface, 1, wxEXPAND | wxALL, 4);
+	horizPlotSizer->Add(m_yGraphScroller, 0, wxALL | wxEXPAND | wxALIGN_CENTER_VERTICAL, 2);
+
+	wxBoxSizer *vertPlotSizer = new wxBoxSizer(wxVERTICAL);
+	vertPlotSizer->Add(optionsSizer, 0, wxEXPAND, 2);
+	vertPlotSizer->Add(horizPlotSizer, 1, wxEXPAND | wxALL, 4);
+	vertPlotSizer->Add(scrollSizer, 0, wxEXPAND, 0);
+
+	wxBoxSizer *mainSizer = new wxBoxSizer(wxHORIZONTAL);
+	mainSizer->Add(vertPlotSizer, 1, wxEXPAND | wxALL, 4);
+	mainSizer->Add(m_dataSelector, 0, wxEXPAND | wxALL, 0);
 	SetSizer( mainSizer );
 }
 
@@ -236,17 +243,7 @@ wxDVDMapCtrl::~wxDVDMapCtrl()
 void wxDVDMapCtrl::AddDataSet(wxDVTimeSeriesDataSet* d, const wxString& group, bool update_ui )
 {
 	m_dataSets.push_back(d);
-
-	wxString displayedName;
-	if (group != wxEmptyString)
-		displayedName = "-" + group + "- " + d->GetSeriesTitle() + " (" + d->GetUnits() + ")";
-	else
-		displayedName = d->GetSeriesTitle() + " (" + d->GetUnits() + ")";
-
-	//Our data selector sorts by name (so groups show up together).
-	//We therefore use the array m_indexedDataNames to assign indices to our data sets (in the order they were added).
-	m_indexedDataNames.push_back(displayedName);
-	m_dataSelector->Append(displayedName);
+	m_dataSelector->Append(d->GetTitleWithUnits(), group);
 
 	if (update_ui)
 		Layout(); //Resize dataSelector.
@@ -260,20 +257,33 @@ void wxDVDMapCtrl::RemoveDataSet(wxDVTimeSeriesDataSet* d)
 	m_dataSets.erase( it );
 
 	//Remove from data selector choice and indexedNames array
-	m_dataSelector->Delete(m_dataSelector->FindString(m_indexedDataNames[removedIndex]));
-	m_indexedDataNames.erase( m_indexedDataNames.begin() + removedIndex );
+	m_dataSelector->RemoveAt(removedIndex);
 
-	if (m_currentlyShownDataSet == d)
-		ChangePlotDataTo(NULL);
+	if (m_currentlyShownDataSetTop == d) 
+	{ 
+		ChangePlotDataTo(NULL, wxPLPlotCtrl::PLOT_TOP);
+
+		if (m_currentlyShownDataSetBottom)
+		{
+			m_currentlyShownDataSetTop = m_currentlyShownDataSetBottom;
+			ChangePlotDataTo(m_currentlyShownDataSetTop, wxPLPlotCtrl::PLOT_TOP);
+			ChangePlotDataTo(NULL, wxPLPlotCtrl::PLOT_BOTTOM);
+			m_currentlyShownDataSetBottom = NULL;
+		}
+	}
+	else if (m_currentlyShownDataSetBottom == d)
+	{ 
+		ChangePlotDataTo(NULL, wxPLPlotCtrl::PLOT_BOTTOM); 
+	}
 }
 
 void wxDVDMapCtrl::RemoveAllDataSets()
 {
-	ChangePlotDataTo(NULL);
+	ChangePlotDataTo(NULL, wxPLPlotCtrl::PLOT_TOP);
+	ChangePlotDataTo(NULL, wxPLPlotCtrl::PLOT_BOTTOM);
 
 	m_dataSets.clear();
-	m_indexedDataNames.clear();
-	m_dataSelector->Clear();
+	m_dataSelector->RemoveAll();
 }
 
 void wxDVDMapCtrl::SetXViewRange(double min, double max)
@@ -362,10 +372,10 @@ void wxDVDMapCtrl::KeepXBoundsWithinLimits(double* xMin, double* xMax)
 	//Don't zoom out too far.
 	double timeMin = 0; 
 	double timeMax = 1; 
-	if ( m_currentlyShownDataSet != 0 )
+	if ( m_currentlyShownDataSetTop != 0 )
 	{
-		timeMin = m_currentlyShownDataSet->GetMinHours();
-		timeMax = m_currentlyShownDataSet->GetMaxHours();
+		timeMin = m_currentlyShownDataSetTop->GetMinHours();
+		timeMax = m_currentlyShownDataSetTop->GetMaxHours();
 	}
 
 	if (*xMin < timeMin)
@@ -420,10 +430,10 @@ void wxDVDMapCtrl::UpdateXScrollbarPosition()
 	int pageSize = thumbSize;
 	
 	double tmin = 0, tmax = 1;
-	if ( m_currentlyShownDataSet != 0 )
+	if ( m_currentlyShownDataSetTop != 0 )
 	{
-		tmin = m_currentlyShownDataSet->GetMinHours();
-		tmax = m_currentlyShownDataSet->GetMaxHours();
+		tmin = m_currentlyShownDataSetTop->GetMinHours();
+		tmax = m_currentlyShownDataSetTop->GetMaxHours();
 	}
 
 	int range = tmax-tmin;
@@ -443,16 +453,14 @@ void wxDVDMapCtrl::UpdateYScrollbarPosition()
 	m_yGraphScroller->SetScrollbar(position, thumbSize, range, pageSize);
 }
 
-bool wxDVDMapCtrl::SetCurrentDataName(const wxString& name)
+bool wxDVDMapCtrl::SetCurrentDataName(const wxString& name, wxPLPlotCtrl::PlotPos pPos)
 {
 	for (int i=0; i < m_dataSets.size(); i++)
 	{
 		if (m_dataSets[i]->GetTitleWithUnits() == name)
 		{
-			ChangePlotDataTo(m_dataSets[i]);
-
-			m_dataSelector->SetStringSelection(name);
-
+			ChangePlotDataTo(m_dataSets[i], pPos);
+			m_dataSelector->SelectRowWithNameInCol(name, (pPos == wxPLPlotCtrl::PLOT_BOTTOM ? 1 : 0));
 			return true;
 		}
 	}
@@ -460,17 +468,18 @@ bool wxDVDMapCtrl::SetCurrentDataName(const wxString& name)
 	return false;
 }
 
-wxString wxDVDMapCtrl::GetCurrentDataName()
+wxString wxDVDMapCtrl::GetCurrentDataName(wxPLPlotCtrl::PlotPos pPos)
 {
-	return m_dataSelector->GetStringSelection();
+	if (pPos == wxPLPlotCtrl::PLOT_BOTTOM) { return m_dataSelector->GetSelectedNamesInCol(1); }
+	return m_dataSelector->GetSelectedNamesInCol(0);
 }
 
-void wxDVDMapCtrl::SelectDataSetAtIndex(int index)
+void wxDVDMapCtrl::SelectDataSetAtIndex(int index, wxPLPlotCtrl::PlotPos pPos)
 {
 	if (index < 0 || index >= m_dataSets.size()) return;
 
-	ChangePlotDataTo(m_dataSets[index]);
-	m_dataSelector->SetStringSelection(m_indexedDataNames[index]);
+	ChangePlotDataTo(m_dataSets[index], pPos);
+	m_dataSelector->SelectRowInCol(index, (pPos == wxPLPlotCtrl::PLOT_BOTTOM ? 1 : 0), true);
 }
 
 void wxDVDMapCtrl::SetZMin(double min)
@@ -573,7 +582,8 @@ void wxDVDMapCtrl::SetColourMapName(const wxString& name)
 		m_plotSurface->SetSideWidget( m_colourMap, wxPLPlotCtrl::Y_RIGHT );
 		m_colourMap->SetScaleMinMax( scaleMin, scaleMax );
 		m_colourMapSelector->SetSelection(position);
-		m_dmap->SetColourMap( m_colourMap );
+		m_dmapTop->SetColourMap( m_colourMap );
+		m_dmapBottom->SetColourMap(m_colourMap);
 		Invalidate();
 	}
 }
@@ -584,10 +594,18 @@ void wxDVDMapCtrl::Invalidate()
 	m_plotSurface->Refresh();
 }
 
-void wxDVDMapCtrl::ChangePlotDataTo(wxDVTimeSeriesDataSet* d)
+void wxDVDMapCtrl::ChangePlotDataTo(wxDVTimeSeriesDataSet* d, wxPLPlotCtrl::PlotPos pPos)
 {
-	m_currentlyShownDataSet = d;
-	m_dmap->SetData(d);
+	if (pPos == wxPLPlotCtrl::PLOT_BOTTOM)
+	{
+		m_currentlyShownDataSetBottom = d;
+		m_dmapBottom->SetData(d);
+	}
+	else
+	{
+		m_currentlyShownDataSetTop = d;
+		m_dmapTop->SetData(d);
+	}
 
 	if ( d )
 	{
@@ -595,7 +613,14 @@ void wxDVDMapCtrl::ChangePlotDataTo(wxDVTimeSeriesDataSet* d)
 		d->GetDataMinAndMax( &min, &max );
 		m_colourMap->SetScaleMinMax( min, max );
 		m_colourMap->ExtendScaleToNiceNumbers();		
-		m_dmap->SetColourMap( m_colourMap );
+		if (pPos == wxPLPlotCtrl::PLOT_BOTTOM)
+		{
+			m_dmapBottom->SetColourMap(m_colourMap);
+		}
+		else
+		{
+			m_dmapTop->SetColourMap(m_colourMap);
+		}
 	}
 
 	//Update our text boxes to reflect the auto-scaled min/max.
@@ -607,15 +632,14 @@ void wxDVDMapCtrl::ChangePlotDataTo(wxDVTimeSeriesDataSet* d)
 }
 
 /*Event Handlers*/
-void wxDVDMapCtrl::OnDataComboBox(wxCommandEvent &)
-{
-	//Assume the order of the items in wxChoice are same as in m_dataSets
-	//(they should be.)
-	std::vector<wxString>::iterator it = std::find( m_indexedDataNames.begin(), m_indexedDataNames.end(), m_dataSelector->GetStringSelection() );
-	
-	if ( it == m_indexedDataNames.end() ) return;
 
-	ChangePlotDataTo(m_dataSets[ it - m_indexedDataNames.begin() ]);
+void wxDVDMapCtrl::OnDataChannelSelection(wxCommandEvent& e)
+{
+	int row, col;
+	bool isChecked;
+
+	m_dataSelector->GetLastEventInfo(&row, &col, &isChecked);
+	AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos(col), row);
 }
 
 void wxDVDMapCtrl::OnColourMapSelection(wxCommandEvent &)
@@ -658,10 +682,10 @@ void wxDVDMapCtrl::OnZoomFit(wxCommandEvent &)
 {
 	double xmin = 0;
 	double xmax = 8760;
-	if ( m_currentlyShownDataSet )
+	if ( m_currentlyShownDataSetTop )
 	{
-		xmin = m_currentlyShownDataSet->GetMinHours();
-		xmax = m_currentlyShownDataSet->GetMaxHours();
+		xmin = m_currentlyShownDataSetTop->GetMinHours();
+		xmax = m_currentlyShownDataSetTop->GetMaxHours();
 	}
 	
 
@@ -728,9 +752,9 @@ void wxDVDMapCtrl::OnMouseWheel(wxMouseEvent& e)
 
 void wxDVDMapCtrl::OnScroll(wxScrollEvent& e)
 {
-	if ( !m_currentlyShownDataSet ) return;
+	if ( !m_currentlyShownDataSetTop ) return;
 
-	double xmin = e.GetPosition() + m_currentlyShownDataSet->GetMinHours();
+	double xmin = e.GetPosition() + m_currentlyShownDataSetTop->GetMinHours();
 	double xmax = xmin + m_xAxis->GetWorldLength();
 
 	MakeXBoundsNice(&xmin, &xmax);
@@ -816,10 +840,10 @@ void wxDVDMapCtrl::OnYScrollPageDown(wxScrollEvent& e)
 
 void wxDVDMapCtrl::OnResetColourMapMinMax(wxCommandEvent &)
 {
-	if ( !m_currentlyShownDataSet ) return;
+	if ( !m_currentlyShownDataSetTop ) return;
 
 	double dataMin, dataMax;
-	m_currentlyShownDataSet->GetDataMinAndMax(&dataMin, &dataMax);
+	m_currentlyShownDataSetTop->GetDataMinAndMax(&dataMin, &dataMax);
 
 	m_colourMap->SetScaleMinMax(dataMin, dataMax);
 	m_colourMap->ExtendScaleToNiceNumbers();
@@ -854,3 +878,13 @@ void wxDVDMapCtrl::SetSyncWithTimeSeries(bool b)
 	m_syncCheck->SetValue(b);
 }
 
+void wxDVDMapCtrl::AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos pPos, int index)
+{
+	if (index < 0 || index >= (int)m_dataSets.size()) return;
+
+	size_t idx = (size_t)index;
+	ChangePlotDataTo(m_dataSets[idx], pPos);
+
+	UpdateScrollbarPosition();
+	Invalidate();
+}

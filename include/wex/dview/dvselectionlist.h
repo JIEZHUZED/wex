@@ -25,6 +25,7 @@ END_DECLARE_EVENT_TYPES()
 
 #define wxDVSEL_RADIO_FIRST_COL 0x01
 #define wxDVSEL_NO_COLOURS 0x02
+#define wxDVSEL_RADIO_ALL_COL 0x03
 
 
 class wxDVSelectionListCtrl : public wxScrolledWindow, public wxDVAutoColourAssigner

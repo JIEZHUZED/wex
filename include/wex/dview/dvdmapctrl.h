@@ -36,13 +36,13 @@ public:
 	void RemoveDataSet(wxDVTimeSeriesDataSet* d); //releases ownership, does not delete.
 	void RemoveAllDataSets(); //clear all data sets from graphs and memory. (delete plottables.  Never took ownership.
 
-	wxString GetCurrentDataName();
-	bool SetCurrentDataName(const wxString& name);
+	wxString GetCurrentDataName(wxPLPlotCtrl::PlotPos pPos);
+	bool SetCurrentDataName(const wxString& name, wxPLPlotCtrl::PlotPos pPos);
 	wxDVColourMap* GetCurrentColourMap();
 	void SetColourMapName(const wxString& name);
-	void SelectDataSetAtIndex(int index);
+	void SelectDataSetAtIndex(int index, wxPLPlotCtrl::PlotPos pPos);
 
-	void ChangePlotDataTo(wxDVTimeSeriesDataSet* d);
+	void ChangePlotDataTo(wxDVTimeSeriesDataSet* d, wxPLPlotCtrl::PlotPos pPos);
 
 	//These just set the value.
 	//They do not check that it is within the limits or adjust it at all.
@@ -86,7 +86,6 @@ public:
 
 
 	/*Event Handlers*/
-	void OnDataComboBox(wxCommandEvent& e);
 	void OnColourMapSelection(wxCommandEvent& e);
 	void OnColourMapMinChanged(wxCommandEvent& e);
 	void OnColourMapMaxChanged(wxCommandEvent& e);
@@ -108,29 +107,43 @@ public:
 
 	void OnResetColourMapMinMax(wxCommandEvent& e);
 
+	void OnDataChannelSelection(wxCommandEvent& e);
+
 	void Invalidate(); // recalculate and rerender plot
 private:
+
+	enum GraphAxisPosition
+	{
+		TOP_LEFT_AXIS = 0,
+		TOP_RIGHT_AXIS,
+		BOTTOM_LEFT_AXIS,
+		BOTTOM_RIGHT_AXIS,
+		GRAPH_AXIS_POSITION_COUNT
+	};
+
 	wxCheckBox *m_syncCheck;
 
-	std::vector<wxString> m_indexedDataNames;
-	wxChoice *m_dataSelector;
+	wxDVSelectionListCtrl *m_dataSelector;
 	wxChoice *m_colourMapSelector;
 
 	wxTextCtrl *m_minTextBox;
 	wxTextCtrl *m_maxTextBox;
 
 	std::vector<wxDVTimeSeriesDataSet*> m_dataSets;
-	wxDVTimeSeriesDataSet* m_currentlyShownDataSet;
+	wxDVTimeSeriesDataSet* m_currentlyShownDataSetTop;
+	wxDVTimeSeriesDataSet* m_currentlyShownDataSetBottom;
 
 	wxPLPlotCtrl *m_plotSurface;
 	wxDVColourMap *m_colourMap;
-	wxDVDMapPlot *m_dmap;
+	wxDVDMapPlot *m_dmapTop;
+	wxDVDMapPlot *m_dmapBottom;
 	wxPLTimeAxis *m_xAxis; // axes are owned by plot surface
 	wxPLLinearAxis *m_yAxis;
 
 	wxScrollBar *m_xGraphScroller;
 	wxScrollBar *m_yGraphScroller;
 
+	void AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos pPos, int index);
 	/*
 	double mXWorldMin, mXWorldMax;
 	double mYWorldMin, mYWorldMax;
