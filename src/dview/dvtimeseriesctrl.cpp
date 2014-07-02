@@ -1159,7 +1159,7 @@ void wxDVTimeSeriesCtrl::SetViewRange(double min, double max)
 
 void wxDVTimeSeriesCtrl::GetVisibleDataMinAndMax(double* min, double* max, const std::vector<int>& selectedChannelIndices)
 {
-	*min = 0;
+	*min = 1000000000;
 	*max = 0; 
 
 	double tempMin = 0;
@@ -1457,14 +1457,13 @@ void wxDVTimeSeriesCtrl::AutoscaleYAxis( wxPLAxis *axisToScale, const std::vecto
 
 	if (needsRescale)
 	{
-		wxDVPlotHelper::ExtendBoundToNiceNumber(&dataMax);
-		wxDVPlotHelper::ExtendBoundToNiceNumber(&dataMin);
+		wxDVPlotHelper::ExtendBoundsToNiceNumber(&dataMax, &dataMin);
 
 		//0 should always be visible.
-		if (dataMin > 0)
-			dataMin = 0;
-		if (dataMax < 0)
-			dataMax = 0;
+		//if (dataMin > 0)
+		//	dataMin = 0;
+		//if (dataMax < 0)
+		//	dataMax = 0;
 
 		//applog("Setting y axis bounds to (%.2f, %.2f) \n", dataMin, dataMax);
 		axisToScale->SetWorld(dataMin, dataMax);
