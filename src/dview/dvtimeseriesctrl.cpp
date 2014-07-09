@@ -871,7 +871,7 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 
 		d2 = new wxDVArrayDataSet(d->GetSeriesTitle(), d->GetUnits(), 1.0 / timestep);
 
-		while (nextHour < MinHrs)
+		while (nextHour <= MinHrs)
 		{
 			nextHour += 1.0;
 		}
@@ -915,7 +915,7 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 
 		d2 = new wxDVArrayDataSet(d->GetSeriesTitle(), d->GetUnits(), 24.0 / timestep);
 
-		while (nextDay < MinHrs)
+		while (nextDay <= MinHrs)
 		{
 			nextDay += 24.0;
 		}
