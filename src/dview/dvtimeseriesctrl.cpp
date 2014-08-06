@@ -1637,7 +1637,7 @@ void wxDVTimeSeriesCtrl::RemoveGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos 
 				//Set the y axis to the left side (instead of the right)
 				for (size_t i=0; i<m_selectedChannelIndices[graphIndex]->size(); i++)
 				{
-					m_plotSurface->RemovePlot(m_plots[(*m_selectedChannelIndices[graphIndex])[i]]);
+					m_plotSurface->RemovePlot(m_plots[(*m_selectedChannelIndices[graphIndex])[i]], pPos);
 					m_plotSurface->AddPlot( m_plots[(*m_selectedChannelIndices[graphIndex])[i]], 
 						wxPLPlotCtrl::X_BOTTOM, wxPLPlotCtrl::Y_LEFT, pPos);
 				}
