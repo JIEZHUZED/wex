@@ -612,7 +612,7 @@ void wxDVDMapCtrl::ChangePlotDataTo(wxDVTimeSeriesDataSet* d, wxPLPlotCtrl::Plot
 		double min, max;
 		d->GetDataMinAndMax( &min, &max );
 		m_colourMap->SetScaleMinMax( min, max );
-		m_colourMap->ExtendScaleToNiceNumbers();		
+		m_colourMap->ExtendScaleToNiceNumbers(true);		
 		if (pPos == wxPLPlotCtrl::PLOT_BOTTOM)
 		{
 			m_dmapBottom->SetColourMap(m_colourMap);
