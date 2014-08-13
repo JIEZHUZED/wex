@@ -782,10 +782,10 @@ void wxDVProfileCtrl::AutoScaleYAxes()
 			switch(m_plots[currently_shown[j]]->axisPosition)
 			{
 			case wxPLPlotCtrl::Y_LEFT:
-				m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &leftYAxisMin, &leftYAxisMax);
+				m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &leftYAxisMin, &leftYAxisMax, true);
 				break;
 			case wxPLPlotCtrl::Y_RIGHT:
-				m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &rightYAxisMin, &rightYAxisMax);
+				m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &rightYAxisMin, &rightYAxisMax, true);
 				break;
 			//We don't care about x-axis.  It WILL be Y.
 			case wxPLPlotCtrl::X_BOTTOM:

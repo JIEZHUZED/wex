@@ -18,6 +18,7 @@
 #include <wx/dcsvg.h>
 #include <wx/tipwin.h>
 
+#include "wex/dview/dvplothelper.h"
 #include "wex/plot/plhistplot.h"
 #include "wex/plot/plplotctrl.h"
 #include "wex/pdf/pdfdc.h"
@@ -108,14 +109,18 @@ bool wxPLPlottable::GetMinMax(double *pxmin, double *pxmax, double *pymin, doubl
 	return true;
 }
 
-bool wxPLPlottable::ExtendMinMax(double *pxmin, double *pxmax, double *pymin, double *pymax) const
+bool wxPLPlottable::ExtendMinMax(double *pxmin, double *pxmax, double *pymin, double *pymax, bool extendToNice) const
 {
 	double xmin, xmax, ymin, ymax;
 	if (!GetMinMax(&xmin, &xmax, &ymin, &ymax)) return false;
+
+	double yminNice = ymin, ymaxNice = ymax;
+	wxDVPlotHelper::ExtendBoundsToNiceNumber(&ymaxNice, &yminNice);
+
 	if (pxmin && xmin < *pxmin) *pxmin = xmin;
 	if (pxmax && xmax > *pxmax) *pxmax = xmax;
-	if (pymin && ymin < *pymin) *pymin = ymin;
-	if (pymax && ymax > *pymax) *pymax = ymax;
+	if (pymin && yminNice < *pymin) *pymin = yminNice;
+	if (pymax && ymaxNice > *pymax) *pymax = ymaxNice;
 	return true;
 }
 
