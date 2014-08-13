@@ -78,7 +78,7 @@ wxDVScatterPlotCtrl::wxDVScatterPlotCtrl(wxWindow* parent, wxWindowID id, const 
 	topSizer->Add(m_dataSelectionList, 0, wxEXPAND, 0);
 
 	mainSizer->Add(optionsSizer, 0, wxEXPAND, 0);
-	mainSizer->Add(topSizer, 0, wxEXPAND, 0);
+	mainSizer->Add(topSizer, 1, wxEXPAND | wxALL, 0);
 
 	m_xDataIndex = -1;
 
