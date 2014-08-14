@@ -19,10 +19,10 @@
 #include "wex/dview/dvscatterplotctrl.h"
 #include "wex/dview/dvplotctrlsettings.h"
 #include "wex/dview/dvstatisticstablectrl.h"
+#include "wex/dview/dvstatisticstablectrl.h"
+#include "wex/metro.h"
 
-class wxMetroNotebook;
-
-class wxDVPlotCtrl : public wxPanel
+class wxDVPlotCtrl : public wxMetroNotebook
 {
 public:
 	wxDVPlotCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, 
@@ -60,7 +60,6 @@ public:
 private:
 	std::vector<wxDVTimeSeriesDataSet*> m_dataSets;
 
-	wxMetroNotebook *m_plotNotebook;
 	wxDVTimeSeriesCtrl *m_timeSeries;
 	wxDVTimeSeriesCtrl *m_hourlyTimeSeries;
 	wxDVTimeSeriesCtrl *m_dailyTimeSeries;
