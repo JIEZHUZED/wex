@@ -31,25 +31,22 @@ enum { ID_TopCheckbox = wxID_HIGHEST + 1, ID_BottomCheckbox, ID_StatCheckbox };
 
 class wxDVTimeSeriesPlot : public wxPLPlottable
 {
-	public:
-		enum Style { NORMAL, STEPPED };
-
 	private:
 		wxDVTimeSeriesDataSet *m_data;
 		wxColour m_colour;
-		Style m_style;
-		TimeSeriesType m_seriesType;
+		wxDVTimeSeriesStyle m_style;
+		wxDVTimeSeriesType m_seriesType;
 		bool m_ownsDataset;
 
 	public:
-		wxDVTimeSeriesPlot( wxDVTimeSeriesDataSet *ds, TimeSeriesType seriesType, bool OwnsDataset = false )
+		wxDVTimeSeriesPlot( wxDVTimeSeriesDataSet *ds, wxDVTimeSeriesType seriesType, bool OwnsDataset = false )
 			: m_data(ds)
 		{
 			assert( ds != 0 );
 
 			m_colour = *wxRED;
 			m_seriesType = seriesType;
-			m_style = (seriesType == RAW_DATA_TIME_SERIES || seriesType == HOURLY_TIME_SERIES) ? NORMAL : STEPPED;
+			m_style = (seriesType == wxDV_RAW || seriesType == wxDV_HOURLY) ? wxDV_NORMAL : wxDV_STEPPED;
 			m_ownsDataset = OwnsDataset;
 		}
 
@@ -61,7 +58,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 			}
 		}
 
-		void SetStyle( Style ss ) { m_style = ss; }
+		void SetStyle(wxDVTimeSeriesStyle ss) { m_style = ss; }
 		void SetColour( const wxColour &col ) { m_colour = col; }
 
 		virtual wxString GetXDataLabel() const 
@@ -103,7 +100,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 		
 			dc.SetPen( wxPen( m_colour, 2, wxPENSTYLE_SOLID ) );
 
-			if(m_style == NORMAL)
+			if(m_style == wxDV_NORMAL)
 			{
 				len = m_data->Length();
 				if(m_data->At(0).x < wmin.x) { len++; }
@@ -112,7 +109,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 				points.reserve( len );
 
 				//If this is a line plot then add a point at the left edge of the graph if there isn't one there in the data
-				if(m_style == NORMAL && m_data->At(0).x < wmin.x)
+				if(m_style == wxDV_NORMAL && m_data->At(0).x < wmin.x)
 				{
 					for ( size_t i = 1; i < m_data->Length(); i++ )
 					{
@@ -135,7 +132,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 				}
 
 				//If this is a line plot then add a point at the right edge of the graph if there isn't one there in the data
-				if(m_style == NORMAL && m_data->At(m_data->Length() - 1).x > wmax.x)
+				if(m_style == wxDV_NORMAL && m_data->At(m_data->Length() - 1).x > wmax.x)
 				{
 					for ( size_t i = m_data->Length() - 2; i >= 0; i-- )
 					{
@@ -244,11 +241,11 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 
 		double GetPeriodLowerBoundary(double hourNumber, double timeStep)
 		{
-			if(m_seriesType == DAILY_TIME_SERIES)
+			if(m_seriesType == wxDV_DAILY)
 			{
 				hourNumber = hourNumber - fmod(hourNumber, 24);
 			}
-			else if (m_seriesType == MONTHLY_TIME_SERIES)
+			else if (m_seriesType == wxDV_MONTHLY)
 			{
 				hourNumber = fmod(hourNumber, 8760);
 
@@ -275,11 +272,11 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 
 		double GetPeriodUpperBoundary(double hourNumber, double timeStep)
 		{
-			if(m_seriesType == DAILY_TIME_SERIES)
+			if(m_seriesType == wxDV_DAILY)
 			{
 				hourNumber = hourNumber - fmod(hourNumber, 24) + 24;
 			}
-			else if (m_seriesType == MONTHLY_TIME_SERIES)
+			else if (m_seriesType == wxDV_MONTHLY)
 			{
 				hourNumber = fmod(hourNumber, 8760);
 
@@ -310,7 +307,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 
 			for(size_t i = 0; i < m_data->Length(); i++)
 			{
-				if (m_seriesType == MONTHLY_TIME_SERIES)
+				if (m_seriesType == wxDV_MONTHLY)
 				{
 					factor = fmod(m_data->At(i).x, 8760);
 
@@ -327,7 +324,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 					else if(factor >= 7296.0 && factor < 8016.0) { factor = 720.0; }
 					else if(factor >= 8016.0 && factor < 8760.0) { factor = 744.0; }
 				}
-				else if (m_seriesType == DAILY_TIME_SERIES)
+				else if (m_seriesType == wxDV_DAILY)
 				{
 					factor = 24.0;
 				}
@@ -441,8 +438,8 @@ int wxDVTimeSeriesSettingsDialog::GetLineStyle() { return mLineStyleCombo->GetSe
 void wxDVTimeSeriesSettingsDialog::SetSync( bool b ) { mSyncCheck->SetValue( b ); }
 bool wxDVTimeSeriesSettingsDialog::GetSync() { return mSyncCheck->GetValue(); }
 
-void wxDVTimeSeriesSettingsDialog::SetStatType( StatType statType ) { mStatTypeCheck->SetValue( statType == SUM ? true : false ); }
-StatType wxDVTimeSeriesSettingsDialog::GetStatType() { return mStatTypeCheck->GetValue() ? SUM : AVERAGE; }
+void wxDVTimeSeriesSettingsDialog::SetStatType( wxDVStatType wxDVStatType ) { mStatTypeCheck->SetValue( wxDVStatType == wxDV_SUM ? true : false ); }
+wxDVStatType wxDVTimeSeriesSettingsDialog::GetStatType() { return mStatTypeCheck->GetValue() ? wxDV_SUM : wxDV_AVERAGE; }
 
 void wxDVTimeSeriesSettingsDialog::SetAutoscale( bool b ) 
 { 
@@ -472,7 +469,7 @@ void wxDVTimeSeriesSettingsDialog::OnClickBottomHandler(wxCommandEvent& event)
 
 void wxDVTimeSeriesSettingsDialog::OnClickStatHandler(wxCommandEvent& event)
 {
-	SetStatType( mStatTypeCheck->IsChecked() ? SUM : AVERAGE );
+	SetStatType( mStatTypeCheck->IsChecked() ? wxDV_SUM : wxDV_AVERAGE );
 }
 
 
@@ -510,15 +507,15 @@ END_EVENT_TABLE()
 
 
 /*Constructors and Destructors*/
-wxDVTimeSeriesCtrl::wxDVTimeSeriesCtrl(wxWindow *parent, wxWindowID id, TimeSeriesType seriesType, StatType statType)
+wxDVTimeSeriesCtrl::wxDVTimeSeriesCtrl(wxWindow *parent, wxWindowID id, wxDVTimeSeriesType seriesType, wxDVStatType wxDVStatType)
 : wxPanel(parent, id)
 {	
 	m_topAutoScale = true;
 	m_bottomAutoScale = true;
 	m_syncToHeatMap = false;
-	m_lineStyle = ((seriesType == RAW_DATA_TIME_SERIES || seriesType == HOURLY_TIME_SERIES) ? wxDVTimeSeriesPlot::NORMAL : wxDVTimeSeriesPlot::STEPPED); // line, stepped, points
+	m_lineStyle = ((seriesType == wxDV_RAW || seriesType == wxDV_HOURLY) ? wxDV_NORMAL : wxDV_STEPPED); // line, stepped, points
 	m_seriesType = seriesType;
-	m_statType = statType;
+	m_statType = wxDVStatType;
 
 	m_plotSurface = new wxPLPlotCtrl(this, ID_PLOT_SURFACE); 
 	m_plotSurface->SetAllowHighlighting(true);
@@ -582,7 +579,7 @@ void wxDVTimeSeriesCtrl::Invalidate()
 	m_plotSurface->Refresh();
 }
 
-TimeSeriesType wxDVTimeSeriesCtrl::GetTimeSeriesType()
+wxDVTimeSeriesType wxDVTimeSeriesCtrl::GetwxDVTimeSeriesType()
 {
 	return m_seriesType;
 }
@@ -655,8 +652,8 @@ void wxDVTimeSeriesCtrl::OnSettings( wxCommandEvent &e )
 
 			for(size_t i = 0; i < m_plots.size(); i++)
 			{
-				m_plots[i]->SetStyle( (wxDVTimeSeriesPlot::Style) m_lineStyle );
-				m_plots[i]->UpdateSummaryData(m_statType == AVERAGE ? true : false);
+				m_plots[i]->SetStyle((wxDVTimeSeriesStyle)m_lineStyle);
+				m_plots[i]->UpdateSummaryData(m_statType == wxDV_AVERAGE ? true : false);
 
 				if ( 0 == dynamic_cast<wxDVArrayDataSet*>( m_plots[i]->GetDataSet() ) )
 					nonmodifiables += m_plots[i]->GetDataSet()->GetSeriesTitle() + "\n";
@@ -669,7 +666,7 @@ void wxDVTimeSeriesCtrl::OnSettings( wxCommandEvent &e )
 		{
 			for (size_t i=0; i<m_plots.size(); i++)
 			{
-				m_plots[i]->SetStyle( (wxDVTimeSeriesPlot::Style) m_lineStyle );
+				m_plots[i]->SetStyle((wxDVTimeSeriesStyle)m_lineStyle);
 			}
 		}
 
@@ -858,11 +855,11 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 	wxDVArrayDataSet *d2 = 0;
 	bool IsDataSetEmpty = true;
 
-	if (m_seriesType == RAW_DATA_TIME_SERIES)
+	if (m_seriesType == wxDV_RAW)
 	{
 		IsDataSetEmpty = false;
 	}
-	else if (m_seriesType == HOURLY_TIME_SERIES && timestep < 1.0)
+	else if (m_seriesType == wxDV_HOURLY && timestep < 1.0)
 	{
 		//Create hourly data set (avg value of data by day) from m_data if timestep < 1
 		IsDataSetEmpty = false;
@@ -885,7 +882,7 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 				if (i != 0 && counter != 0)
 				{
 					avg = sum / counter;
-					d2->Append(wxRealPoint((double)currentHour + (double)(nextHour - currentHour) / 2.0, (m_statType == AVERAGE ? avg : sum)));
+					d2->Append(wxRealPoint((double)currentHour + (double)(nextHour - currentHour) / 2.0, (m_statType == wxDV_AVERAGE ? avg : sum)));
 					currentHour = nextHour;
 					nextHour += 1;
 				}
@@ -903,10 +900,10 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 		//Prevent appending the final point if it represents 12/31 24:00, which the system interprets as 1/1 0:00 and creates a point for January of the next year
 		if (MaxHrs > 0.0 && fmod(MaxHrs, 8760.0) != 0)
 		{
-			d2->Append(wxRealPoint((double)currentHour + (double)(nextHour - currentHour) / 2.0, (m_statType == AVERAGE ? avg : sum)));
+			d2->Append(wxRealPoint((double)currentHour + (double)(nextHour - currentHour) / 2.0, (m_statType == wxDV_AVERAGE ? avg : sum)));
 		}
 	}
-	else if (m_seriesType == DAILY_TIME_SERIES && timestep < 24.0)
+	else if (m_seriesType == wxDV_DAILY && timestep < 24.0)
 	{
 		//Create daily data set (avg value of data by day) from m_data if timestep < 24
 		IsDataSetEmpty = false;
@@ -929,7 +926,7 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 				if(i != 0 && counter != 0)
 				{ 
 					avg = sum / counter;
-					d2->Append(wxRealPoint((double) currentDay + (double)(nextDay - currentDay) / 2.0, (m_statType == AVERAGE ? avg : sum))); 
+					d2->Append(wxRealPoint((double) currentDay + (double)(nextDay - currentDay) / 2.0, (m_statType == wxDV_AVERAGE ? avg : sum))); 
 					currentDay = nextDay;
 					nextDay += 24.0;
 				}
@@ -947,10 +944,10 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 		//Prevent appending the final point if it represents 12/31 24:00, which the system interprets as 1/1 0:00 and creates a point for January of the next year
 		if(MaxHrs > 0.0 && fmod(MaxHrs, 8760.0) != 0)
 		{
-			d2->Append(wxRealPoint((double) currentDay + (double)(nextDay - currentDay) / 2.0, (m_statType == AVERAGE ? avg : sum))); 
+			d2->Append(wxRealPoint((double) currentDay + (double)(nextDay - currentDay) / 2.0, (m_statType == wxDV_AVERAGE ? avg : sum))); 
 		}
 	}
-	else if (m_seriesType == MONTHLY_TIME_SERIES && timestep < 672.0)	//672 hours = 28 days = shortest possible month
+	else if (m_seriesType == wxDV_MONTHLY && timestep < 672.0)	//672 hours = 28 days = shortest possible month
 	{
 		//Create monthly data set (avg value of data by month) from m_data
 		IsDataSetEmpty = false;
@@ -987,7 +984,7 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 				{ 
 					avg = sum / counter;
 
-					d2->Append(wxRealPoint((double) currentMonth + (double)(nextMonth - currentMonth) / 2.0, (m_statType == AVERAGE ? avg : sum))); 
+					d2->Append(wxRealPoint((double) currentMonth + (double)(nextMonth - currentMonth) / 2.0, (m_statType == wxDV_AVERAGE ? avg : sum))); 
 
 					currentMonth = nextMonth;
 					if(nextMonth == 744.0 + year) { nextMonth = 1416.0 + year; }
@@ -1021,13 +1018,13 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 		//Prevent appending the final point if it represents 12/31 24:00, which the system interprets as 1/1 0:00 and creates a point for January of the next year
 		if(MaxHrs > 0.0 && fmod(MaxHrs, 8760.0) != 0)
 		{
-			d2->Append(wxRealPoint((double) currentMonth + (double)(nextMonth - currentMonth) / 2.0, (m_statType == AVERAGE ? avg : sum))); 
+			d2->Append(wxRealPoint((double) currentMonth + (double)(nextMonth - currentMonth) / 2.0, (m_statType == wxDV_AVERAGE ? avg : sum))); 
 		}
 	}
 	
 	if (!IsDataSetEmpty)
 	{
-		if(m_seriesType == RAW_DATA_TIME_SERIES)
+		if(m_seriesType == wxDV_RAW)
 		{
 			p = new wxDVTimeSeriesPlot(d, m_seriesType);
 		}
@@ -1036,7 +1033,7 @@ void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, const wxString& gr
 			p = new wxDVTimeSeriesPlot(d2, m_seriesType, true);
 		}
 
-		p->SetStyle((wxDVTimeSeriesPlot::Style) m_lineStyle);
+		p->SetStyle((wxDVTimeSeriesStyle)m_lineStyle);
 		m_plots.push_back(p); //Add to data sets list.
 		m_dataSelector->Append( d->GetTitleWithUnits(), group );
 
@@ -1785,13 +1782,13 @@ void wxDVTimeSeriesCtrl::SetSyncWithHeatMap(bool b)
 	m_syncToHeatMap = b;
 }
 
-StatType wxDVTimeSeriesCtrl::GetStatType()
+wxDVStatType wxDVTimeSeriesCtrl::GetStatType()
 {
 	return m_statType;
 }
 
-void wxDVTimeSeriesCtrl::SetStatType(StatType statType)
+void wxDVTimeSeriesCtrl::SetStatType(wxDVStatType wxDVStatType)
 {
-	m_statType = statType;
+	m_statType = wxDVStatType;
 }
 

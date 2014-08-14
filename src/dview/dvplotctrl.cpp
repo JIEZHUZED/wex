@@ -48,10 +48,10 @@ wxDVPlotCtrl::wxDVPlotCtrl(wxWindow* parent, wxWindowID id,
 	m_plotNotebook = new wxMetroNotebook(this, ID_NOTEBOOK, wxDefaultPosition, wxDefaultSize, wxMT_LIGHTTHEME);
 	topSizer->Add(m_plotNotebook, 1, wxEXPAND, 0);
 
-	m_timeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, RAW_DATA_TIME_SERIES, AVERAGE);
-	m_hourlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, HOURLY_TIME_SERIES, AVERAGE);
-	m_dailyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, DAILY_TIME_SERIES, AVERAGE);
-	m_monthlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, MONTHLY_TIME_SERIES, AVERAGE);
+	m_timeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_RAW, wxDV_AVERAGE);
+	m_hourlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_HOURLY, wxDV_AVERAGE);
+	m_dailyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_DAILY, wxDV_AVERAGE);
+	m_monthlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_MONTHLY, wxDV_AVERAGE);
 	m_dMap = new wxDVDMapCtrl(m_plotNotebook, wxID_ANY);
 	m_profilePlots = new wxDVProfileCtrl(m_plotNotebook, wxID_ANY);
 	m_statisticsTable = new wxDVStatisticsTableCtrl(m_plotNotebook, wxID_ANY);
@@ -196,9 +196,9 @@ void wxDVPlotCtrl::RemoveAllDataSets()
 	delete m_dailyTimeSeries;
 	delete m_monthlyTimeSeries;
 
-	m_hourlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, HOURLY_TIME_SERIES, AVERAGE);
-	m_dailyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, DAILY_TIME_SERIES, AVERAGE);
-	m_monthlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, MONTHLY_TIME_SERIES, AVERAGE);
+	m_hourlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_HOURLY, wxDV_AVERAGE);
+	m_dailyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_DAILY, wxDV_AVERAGE);
+	m_monthlyTimeSeries = new wxDVTimeSeriesCtrl(m_plotNotebook, wxID_ANY, wxDV_MONTHLY, wxDV_AVERAGE);
 
 	DisplayTabs();
 }
