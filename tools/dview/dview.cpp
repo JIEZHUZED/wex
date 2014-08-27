@@ -47,6 +47,8 @@ private:
 	wxString mLastDir;
 	wxMenu *mFileMenu, *mRecentMenu;
 	wxString mRecentFiles[MAX_RECENT];
+	wxArrayString mFileNames;
+
 public:
 
 	DViewFrame()
@@ -267,18 +269,33 @@ public:
 	
 	bool Load(const wxArrayString& filenames)
 	{
+		bool FileExists = false;
+
 		wxBeginBusyCursor();
 		for(size_t i=0; i<filenames.GetCount(); i++)
 		{	
-			if(!wxDVFileReader::FastRead(mPlotCtrl, filenames[i]))
+			for (size_t j = 0; j < mFileNames.GetCount(); j++)
 			{
-				wxMessageBox( wxT("The selected file is not of the correct format, is corrupt, no longer exists, or you do not have permission to open it."), wxT("Error opening file."), wxICON_ERROR);
-				RemoveRecent(filenames[i]);
+				if (filenames[i] == mFileNames[j])
+				{
+					FileExists = true;
+					break;
+				}
 			}
-			else
+
+			if (!FileExists)
 			{
-				AddRecent(filenames[i]);
-				mPlotCtrl->DisplayTabs();
+				if(!wxDVFileReader::FastRead(mPlotCtrl, filenames[i]))
+				{
+					wxMessageBox( wxT("The selected file is not of the correct format, is corrupt, no longer exists, or you do not have permission to open it."), wxT("Error opening file."), wxICON_ERROR);
+					RemoveRecent(filenames[i]);
+				}
+				else
+				{
+					AddRecent(filenames[i]);
+					mFileNames.Add(filenames[i]);
+					mPlotCtrl->DisplayTabs();
+				}
 			}
 		}
 		
@@ -307,6 +324,7 @@ public:
 			break;
 		case wxID_CLEAR:
 			mPlotCtrl->RemoveAllDataSets();
+			mFileNames.Clear();
 			break;
 		case wxID_ABOUT:
 		case wxID_HELP:
