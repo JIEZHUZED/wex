@@ -83,7 +83,7 @@ public:
 	void UpdateYScrollbarPosition();
 
 	void ZoomFactorAndUpdate(double factor, double shiftPercent = 0.0);
-
+	void ZoomFit();
 
 	/*Event Handlers*/
 	void OnColourMapSelection(wxCommandEvent& e);

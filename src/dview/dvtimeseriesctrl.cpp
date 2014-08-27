@@ -163,7 +163,6 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 					rpt = m_data->At(i);
 					lowX = GetPeriodLowerBoundary(rpt.x, timeStep);
 					highX = GetPeriodUpperBoundary(rpt.x, timeStep);
-
 					
 					if(lowX >= wmin.x && highX <= wmax.x)	//Draw points for the lower and upper X boundaries of the point's horizontal range for each range that fits in the boundaries of the plot
 					{
@@ -247,6 +246,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 			}
 			else if (m_seriesType == wxDV_MONTHLY)
 			{
+				double year = hourNumber - fmod(hourNumber, 8760);
 				hourNumber = fmod(hourNumber, 8760);
 
 				if(hourNumber >= 0.0 && hourNumber < 744.0) { hourNumber = 0.0; }
@@ -261,6 +261,8 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 				else if(hourNumber >= 6552.0 && hourNumber < 7296.0) { hourNumber = 6552.0; }
 				else if(hourNumber >= 7296.0 && hourNumber < 8016.0) { hourNumber = 7296.0; }
 				else if(hourNumber >= 8016.0 && hourNumber < 8760.0) { hourNumber = 8016.0; }
+
+				hourNumber = hourNumber + year;
 			}
 			else
 			{
@@ -278,6 +280,7 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 			}
 			else if (m_seriesType == wxDV_MONTHLY)
 			{
+				double year = hourNumber - fmod(hourNumber, 8760);
 				hourNumber = fmod(hourNumber, 8760);
 
 				if(hourNumber >= 0.0 && hourNumber < 744.0) { hourNumber = 744.0; }
@@ -292,6 +295,8 @@ class wxDVTimeSeriesPlot : public wxPLPlottable
 				else if(hourNumber >= 6552.0 && hourNumber < 7296.0) { hourNumber = 7296.0; }
 				else if(hourNumber >= 7296.0 && hourNumber < 8016.0) { hourNumber = 8016.0; }
 				else if(hourNumber >= 8016.0 && hourNumber < 8760.0) { hourNumber = 8760.0; }
+
+				hourNumber = hourNumber + year;
 			}
 			else
 			{

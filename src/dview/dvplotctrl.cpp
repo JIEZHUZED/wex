@@ -495,28 +495,43 @@ void wxDVPlotCtrl::SelectDataOnBlankTabs()
 {
 	if (m_dataSets.size() == 0) return;
 
-	if ( m_timeSeries != 0
-		&& m_timeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0 
-		&& m_timeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0 )
+	if (m_timeSeries != 0
+		&& m_timeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0
+		&& m_timeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0)
+	{
 		m_timeSeries->SelectDataSetAtIndex(0);
+		m_timeSeries->ZoomToFit();
+	}
 
 	if (m_hourlyTimeSeries != 0
 		&& m_hourlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0
 		&& m_hourlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0)
+	{
 		m_hourlyTimeSeries->SelectDataSetAtIndex(0);
+		m_hourlyTimeSeries->ZoomToFit();
+	}
 
-	if ( m_dailyTimeSeries != 0
-		&& m_dailyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0 
-		&& m_dailyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0 )
+	if (m_dailyTimeSeries != 0
+		&& m_dailyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0
+		&& m_dailyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0)
+	{
 		m_dailyTimeSeries->SelectDataSetAtIndex(0);
+		m_dailyTimeSeries->ZoomToFit();
+	}
 
-	if ( m_monthlyTimeSeries != 0
-		&& m_monthlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0 
-		&& m_monthlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0 )
+	if (m_monthlyTimeSeries != 0
+		&& m_monthlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0
+		&& m_monthlyTimeSeries->GetDataSelectionList()->GetSelectedNamesInCol(1).size() == 0)
+	{
 		m_monthlyTimeSeries->SelectDataSetAtIndex(0);
+		m_monthlyTimeSeries->ZoomToFit();
+	}
 
 	if (m_dMap->GetCurrentDataName(wxPLPlotCtrl::PLOT_TOP).size() == 0)
+	{
 		m_dMap->SelectDataSetAtIndex(0, wxPLPlotCtrl::PLOT_TOP);
+		m_dMap->ZoomFit();
+	}
 
 	if (m_profilePlots->GetDataSelectionList()->GetSelectedNamesInCol(0).size() == 0)
 		m_profilePlots->SelectDataSetAtIndex(0);

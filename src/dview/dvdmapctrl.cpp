@@ -631,6 +631,25 @@ void wxDVDMapCtrl::ChangePlotDataTo(wxDVTimeSeriesDataSet* d, wxPLPlotCtrl::Plot
 	Invalidate();
 }
 
+void wxDVDMapCtrl::ZoomFit()
+{
+	double xmin = 0;
+	double xmax = 8760;
+	if (m_currentlyShownDataSetTop)
+	{
+		xmin = m_currentlyShownDataSetTop->GetMinHours();
+		xmax = m_currentlyShownDataSetTop->GetMaxHours();
+	}
+
+
+	MakeXBoundsNice(&xmin, &xmax);
+	m_xAxis->SetWorld(xmin, xmax);
+	m_yAxis->SetWorld(0, 24);
+
+	UpdateScrollbarPosition();
+	Invalidate();
+}
+
 /*Event Handlers*/
 
 void wxDVDMapCtrl::OnDataChannelSelection(wxCommandEvent& e)
@@ -680,21 +699,7 @@ void wxDVDMapCtrl::OnZoomOut(wxCommandEvent &)
 
 void wxDVDMapCtrl::OnZoomFit(wxCommandEvent &)
 {
-	double xmin = 0;
-	double xmax = 8760;
-	if ( m_currentlyShownDataSetTop )
-	{
-		xmin = m_currentlyShownDataSetTop->GetMinHours();
-		xmax = m_currentlyShownDataSetTop->GetMaxHours();
-	}
-	
-
-	MakeXBoundsNice(&xmin, &xmax);
-	m_xAxis->SetWorld(xmin, xmax);
-	m_yAxis->SetWorld(0, 24);
-
-	UpdateScrollbarPosition();
-	Invalidate();
+	ZoomFit();
 }
 
 void wxDVDMapCtrl::OnHighlight(wxCommandEvent &)
