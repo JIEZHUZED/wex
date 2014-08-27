@@ -55,7 +55,18 @@ wxDVPlotCtrl::wxDVPlotCtrl(wxWindow* parent, wxWindowID id,
 
 //	this->SetTextOnRight( true );
 
-	DisplayTabs();
+	this->AddPage(m_timeSeries, _("Time Series"), /*wxBITMAP_PNG_FROM_DATA( time ), */true);
+	this->AddPage(m_hourlyTimeSeries, _("Hourly"), /*wxBITMAP_PNG_FROM_DATA( time ), */false);
+	this->AddPage(m_dailyTimeSeries, _("Daily"), /*wxBITMAP_PNG_FROM_DATA( time ), */false);
+	this->AddPage(m_monthlyTimeSeries, _("Monthly"), /*wxBITMAP_PNG_FROM_DATA( time ), */false);
+	this->AddPage(m_profilePlots, _("Profiles"), /*wxBITMAP_PNG_FROM_DATA( calendar ), */false);
+	this->AddPage(m_statisticsTable, _("Statistics Table"), /*wxBITMAP_PNG_FROM_DATA( dmap ), */false);
+	this->AddPage(m_dMap, _("Heat Map"), /*wxBITMAP_PNG_FROM_DATA( dmap ), */false);
+	this->AddPage(m_scatterPlot, _("Scatter"), /*wxBITMAP_PNG_FROM_DATA( scatter ), */false);
+	this->AddPage(m_pnCdf, _("PDF / CDF"), /*wxBITMAP_PNG_FROM_DATA( barchart ), */false);
+	this->AddPage(m_durationCurve, _("Duration Curve"), /*wxBITMAP_PNG_FROM_DATA( curve ), */false);
+
+	this->DisplayTabs();
 }
 
 wxDVPlotCtrl::~wxDVPlotCtrl()
@@ -80,32 +91,16 @@ double wxDVPlotCtrl::GetMinTimeStep()
 
 void wxDVPlotCtrl::DisplayTabs()
 {
-	//TODO:  Is there a better way to do this (hide and show tabs)?  (See also RemoveAllDataSets() method) This might also fix the small blank square that sometimes appears over the tab strip.
 	double MinTimeStep = GetMinTimeStep();
 
-	if (MinTimeStep >= 1.0 && this->GetPageCount() == 10) { this->DeletePage(1); }	//hourly is the second tab - delete it if it exists (pagecount = 10)
-	if (MinTimeStep >= 24.0 && this->GetPageCount() == 9) { this->DeletePage(1); }	//daily is the second tab (hourly has been deleted) - delete it if it exists (pagecount = 9)
-	if (MinTimeStep >= 672.0 && this->GetPageCount() == 8) { this->DeletePage(1); }	//monthly is the second tab (hourly & daily have been deleted) - delete it if it exists (pagecount = 8)
-
-	int PageCount = this->GetPageCount();	//Get count of remaining pages
-
-	//We have to remove all remaining pages and then add back the ones we want since wxMetroNotebook does not have a way to insert a page at a specified index
-	//However, since the time series tab is always first and always displayed we don't remove it since there is a bug in the wxMetroNotebook that errors on removing the last item from the pagelist.
-	for (int i = PageCount - 1; i > 0; i--)
-	{
-		this->RemovePage(i);
-	}
-
-	if (this->GetPageCount() == 0) { this->AddPage(m_timeSeries, _("Time Series"), /*wxBITMAP_PNG_FROM_DATA( time ), */true); } //Only add this if it doesn't already exist
-	if (MinTimeStep < 1.0) { this->AddPage(m_hourlyTimeSeries, _("Hourly"), /*wxBITMAP_PNG_FROM_DATA( time ), */false); }
-	if (MinTimeStep < 24.0) { this->AddPage(m_dailyTimeSeries, _("Daily"), /*wxBITMAP_PNG_FROM_DATA( time ), */false); }
-	if (MinTimeStep < 672.0) { this->AddPage(m_monthlyTimeSeries, _("Monthly"), /*wxBITMAP_PNG_FROM_DATA( time ), */false); }
-	this->AddPage(m_profilePlots, _("Profiles"), /*wxBITMAP_PNG_FROM_DATA( calendar ), */false);
-	this->AddPage(m_statisticsTable, _("Statistics Table"), /*wxBITMAP_PNG_FROM_DATA( dmap ), */false);
-	this->AddPage(m_dMap, _("Heat Map"), /*wxBITMAP_PNG_FROM_DATA( dmap ), */false);
-	this->AddPage(m_scatterPlot, _("Scatter"), /*wxBITMAP_PNG_FROM_DATA( scatter ), */false);
-	this->AddPage(m_pnCdf, _("PDF / CDF"), /*wxBITMAP_PNG_FROM_DATA( barchart ), */false);
-	this->AddPage(m_durationCurve, _("Duration Curve"), /*wxBITMAP_PNG_FROM_DATA( curve ), */false);
+	if (MinTimeStep >= 1.0) { this->HidePage(1); }	//hourly is the second tab
+	else { this->ShowPage(1); }
+	
+	if (MinTimeStep >= 24.0) { this->HidePage(2); }	//daily is the third tab
+	else { this->ShowPage(2); }
+	
+	if (MinTimeStep >= 672.0) { this->HidePage(3); }	//monthly is the fourth tab
+	else { this->ShowPage(3); }
 
 	this->Refresh();
 }

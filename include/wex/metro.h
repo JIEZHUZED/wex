@@ -118,8 +118,8 @@ public:
 		const wxSize &size = wxDefaultSize,
 		long style = 0 );
 
-	void Append( const wxString &label, bool button = false );
-	void Insert( const wxString &label, size_t pos, bool button = false );
+	void Append( const wxString &label, bool button = false, bool visible = true );
+	void Insert(const wxString &label, size_t pos, bool button = false, bool visible = true);
 	void Remove( const wxString &label );
 	int Find( const wxString &label );
 	void Clear();
@@ -132,7 +132,9 @@ public:
 	wxString GetStringSelection();
 	void ReorderLeft( size_t idx );
 	void ReorderRight( size_t idx );
-	
+	void HideItem(size_t idx);
+	void ShowItem(size_t idx);
+
 	wxPoint GetPopupMenuPosition( int index );
 	
 	wxSize DoGetBestSize() const;
@@ -140,13 +142,14 @@ public:
 protected:
 	struct item
 	{
-		item( const wxString &l, bool bb) : label(l), x_start(0), width(0), shown(true), button(bb) { }
-		item( const item &x ) : label(x.label), x_start(x.x_start), width(x.width), shown(x.shown), button(x.button) { }
+		item( const wxString &l, bool bb, bool vis) : label(l), x_start(0), width(0), shown(true), button(bb), visible(vis) { }
+		item(const item &x, bool vis) : label(x.label), x_start(x.x_start), width(x.width), shown(x.shown), button(x.button), visible(vis) { }
 		wxString label;
 		int x_start;
 		int width;
 		bool shown;
 		bool button;
+		bool visible;
 	};
 
 	std::vector<item> m_items;
@@ -188,7 +191,9 @@ public:
 	void DeletePage( int index );
 	int GetPageIndex(wxWindow *win);
 	wxWindow *GetPage( int index );
-	
+	void HidePage(int index);
+	void ShowPage(int index);
+
 	int GetSelection() const;
 	void SetSelection(int id);
 	void SetText(int id, const wxString &text);
@@ -206,6 +211,7 @@ private:
 		wxString text;
 		wxWindow *scroll_win;
 		bool button;
+		bool visible;
 	};
 
 	std::vector<page_info> m_pageList;
