@@ -4,6 +4,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/dcclient.h>
 #include <wx/tokenzr.h>
+#include <wx/window.h>
 
 #ifdef __WXMSW__
 #include <wx/msw/private.h>
@@ -52,6 +53,7 @@ wxDiurnalPeriodCtrl::wxDiurnalPeriodCtrl(wxWindow *parent, int id, const wxPoint
 	m_selStartR = m_selStartC = m_selEndR = m_selEndC = -1;
 	m_min = 0;
 	m_max = 9; // can be set to higher value in SetMinMax
+	m_enable = true;
 	
 	SetupTOUGrid();
 }
@@ -617,24 +619,21 @@ float *wxDiurnalPeriodCtrl::GetData( size_t *nr, size_t *nc )
 	*nc = m_ncols;
 	return m_data;
 }
-
+bool wxDiurnalPeriodCtrl::Enable(bool enable)
+{
+	m_enable = enable;
+	bool retCode = wxWindow::Enable(enable);
+	SetupTOUGrid();
+	return retCode;
+}
 void wxDiurnalPeriodCtrl::SetupTOUGrid()
 {
 	SetMinMax(1, 9, true);
 
-	m_colours.clear();
-	AddColour( wxColour( 143, 226, 170 ) );
-	AddColour( wxColour( 128, 179, 179 ) );
-	AddColour( wxColour( 196, 148, 49 ) );
-	AddColour( wxColour( 44, 175, 133 ) );
-	AddColour( wxColour( 219, 219, 112 ) );
-	AddColour( wxColour( 206, 57, 57 ) );
-	AddColour( wxColour( 94, 136, 81 ) );
-	AddColour( wxColour( 225, 136, 225 ) );
-	AddColour( wxColour( 255, 60, 157 ) );
-	AddColour( wxColour( 86, 172, 214 ) );
-	AddColour( wxColour( 226, 169, 141 ) );
-	AddColour( wxColour( 254, 235, 97 ) );
+	if (m_enable)
+		SetupDefaultColours();
+	else
+		SetupDisabledColours();
 
 	m_rowLabels.clear();
 	AddRowLabel("Jan");
@@ -678,4 +677,36 @@ void wxDiurnalPeriodCtrl::SetupTOUGrid()
 
 	UpdateLayout();
 	InvalidateBestSize();
+}
+void wxDiurnalPeriodCtrl::SetupDefaultColours()
+{
+	m_colours.clear();
+	AddColour(wxColour(143, 226, 170));
+	AddColour(wxColour(128, 179, 179));
+	AddColour(wxColour(196, 148, 49));
+	AddColour(wxColour(44, 175, 133));
+	AddColour(wxColour(219, 219, 112));
+	AddColour(wxColour(206, 57, 57));
+	AddColour(wxColour(94, 136, 81));
+	AddColour(wxColour(225, 136, 225));
+	AddColour(wxColour(255, 60, 157));
+	AddColour(wxColour(86, 172, 214));
+	AddColour(wxColour(226, 169, 141));
+	AddColour(wxColour(254, 235, 97));
+}
+void wxDiurnalPeriodCtrl::SetupDisabledColours()
+{
+	m_colours.clear();
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
+	AddColour(wxColour(96, 96, 96));
 }

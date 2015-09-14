@@ -22,6 +22,7 @@ public:
 
 	void SetupTOUGrid();
 	void SetupDefaultColours();
+	void SetupDisabledColours();
 
 	void AddColour(const wxColour &c);
 	bool GetColour(int i, wxColour &c);
@@ -50,6 +51,9 @@ public:
 	static char ScheduleIntToChar(int d);
 	
 	virtual wxSize DoGetBestSize() const;
+	
+	// override wxWindow Enable
+	bool Enable(bool enable);
 
 private:
 
@@ -87,6 +91,7 @@ private:
 	wxArrayString m_colLabels;
 	bool m_colLabelsVertical;
 	int m_min, m_max;
+	bool m_enable;
 
 	void UpdateLayout();
 
