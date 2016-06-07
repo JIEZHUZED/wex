@@ -184,6 +184,7 @@ wxPdfFontData::wxPdfFontData()
   m_alias  = wxEmptyString;
   m_name   = wxEmptyString;
 
+  m_fontBytes = NULL;
   m_fontFileName = wxEmptyString;
   m_fontIndex = 0;
 

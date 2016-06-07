@@ -97,7 +97,10 @@ public:
   * \param fontIndex the index of the font in a font collection (default: 0)
   * \return the registered font
   */
-  wxPdfFont RegisterFont(const wxString& fontFileName, const wxString& aliasName = wxEmptyString, int fontIndex = 0);
+  //wxPdfFont RegisterFont(const wxString& fontFileName, const wxString& aliasName = wxEmptyString, int fontIndex = 0);
+
+ 
+  wxPdfFont RegisterFont( std::vector<unsigned char> *bytes, const wxString &alias, int fontIndex = 0 );
 
   /// Register a font basedon a wxFont object
   /**
@@ -115,7 +118,7 @@ public:
   *                     not fully qualified, it will be searched in font search path)
   * \return the number of registered fonts
   */
-  int RegisterFontCollection(const wxString& fontCollectionFileName);
+  //int RegisterFontCollection(const wxString& fontCollectionFileName);
 
   /// Register a CJK font family
   /**
@@ -142,7 +145,7 @@ public:
   * \note This method is currently implemented only for wxMSW and wxGTK.
   * \return the number of registered fonts
   */
-  int RegisterSystemFonts();
+  //int RegisterSystemFonts();
 
   /// Register all fonts located in a directory
   /**

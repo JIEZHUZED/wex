@@ -33,8 +33,9 @@
 
 wxPdfFontParser::wxPdfFontParser()
 {
-  m_fileName = wxEmptyString;
+//  m_fileName = wxEmptyString;
   m_inFont = NULL;
+  m_fontBytes = NULL;
 }
 
 wxPdfFontParser::~wxPdfFontParser()

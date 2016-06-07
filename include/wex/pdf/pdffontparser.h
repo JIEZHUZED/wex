@@ -156,6 +156,7 @@ protected:
   wxString              m_fontName; ///< Name of font
   wxInputStream*        m_inFont;   ///< Font file input stream
   wxString              m_style;    ///< Font style
+  std::vector<unsigned char> *m_fontBytes;
 
 private:
 };

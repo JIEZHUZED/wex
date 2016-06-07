@@ -331,25 +331,34 @@ wxPdfFontDataTrueType::WriteFontData(wxOutputStream* fontData, wxPdfSortedArrayI
   size_t fontSize1 = 0;
   bool compressed = false;
   wxFileName fileName;
-  if (m_fontFileName.IsEmpty())
+  wxFSFile* fontFile = NULL;
+  if ( m_fontBytes == 0 )
   {
-    // Font data preprocessed by MakeFont
-    compressed = m_file.Lower().Right(2) == wxT(".z");
-    fileName = m_file;
-    fileName.MakeAbsolute(m_path);
-  }
-  else
-  {
-    fileName = m_fontFileName;
+	  if (m_fontFileName.IsEmpty())
+	  {
+		// Font data preprocessed by MakeFont
+		compressed = m_file.Lower().Right(2) == wxT(".z");
+		fileName = m_file;
+		fileName.MakeAbsolute(m_path);
+	  }
+	  else
+	  {
+		fileName = m_fontFileName;
+	  }
+	  wxFileSystem fs;
+		fontFile = fs.OpenFile(wxFileSystem::FileNameToURL(fileName));
+  
   }
 
   // Open font file
-  wxFileSystem fs;
-  wxFSFile* fontFile = fs.OpenFile(wxFileSystem::FileNameToURL(fileName));
   wxInputStream* fontStream = NULL;
   if (fontFile)
   {
     fontStream = fontFile->GetStream();
+  }
+  else if ( m_fontBytes )
+  {
+	  fontStream = new wxMemoryInputStream( &(*m_fontBytes)[0], m_fontBytes->size() );
   }
   else
   {
@@ -404,11 +413,13 @@ wxPdfFontDataTrueType::WriteFontData(wxOutputStream* fontData, wxPdfSortedArrayI
       }
     }
   }
-
+  
   if (fontFile != NULL)
   {
     delete fontFile;
   }
+  else if ( fontStream != NULL )
+	  delete fontStream;
 
   return fontSize1;
 }
@@ -857,7 +868,12 @@ wxPdfFontDataTrueTypeUnicode::WriteFontData(wxOutputStream* fontData, wxPdfSorte
   wxString fontFullPath = wxEmptyString;
   wxFileName fileName;
   if (m_fontFileName.IsEmpty())
-  {
+  { 
+	if ( m_fontBytes != NULL )
+	{
+		fontStream = new wxMemoryInputStream( &(*m_fontBytes)[0], m_fontBytes->size() );
+		deleteFontStream = true;
+	} else
 #if defined(__WXMSW__)
     if (m_file.IsEmpty() && m_font.IsOk())
     {

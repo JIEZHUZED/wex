@@ -71,6 +71,7 @@ public:
   * \return a reference to a new font data instance
   */
   wxPdfFontData* IdentifyFont(const wxString& fontFileName, int fontIndex);
+  wxPdfFontData* IdentifyFont( wxInputStream &stream, int fontIndex);
 
 #if defined(__WXMSW__) || defined(__WXMAC__)
   /// Identify font based on a wxFont object

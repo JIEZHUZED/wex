@@ -487,12 +487,19 @@ wxPdfFontDataOpenTypeUnicode::WriteFontData(wxOutputStream* fontData, wxPdfSorte
   wxInputStream* fontStream = NULL;
   bool compressed = false;
   wxFileName fileName;
+  bool deleteFontStream = false;
   if (m_fontFileName.IsEmpty())
   {
+    if ( m_fontBytes != NULL )
+	{
+		fontStream = new wxMemoryInputStream( &(*m_fontBytes)[0], m_fontBytes->size() );
+		deleteFontStream = true;
+	} else
 #if defined(__WXMSW__)
     if (m_file.IsEmpty() && m_font.IsOk())
     {
       fontStream = wxPdfFontParserTrueType::LoadTrueTypeFontStream(m_font);
+		deleteFontStream = true;
     }
     else
 #elif defined(__WXMAC__)
@@ -533,6 +540,7 @@ wxPdfFontDataOpenTypeUnicode::WriteFontData(wxOutputStream* fontData, wxPdfSorte
     if (fontFile)
     {
       fontStream = fontFile->GetStream();
+	  deleteFontStream = false;
     }
     else
     {
@@ -571,7 +579,7 @@ wxPdfFontDataOpenTypeUnicode::WriteFontData(wxOutputStream* fontData, wxPdfSorte
       // Assemble subset
       wxPdfFontSubsetCff subset(fileName.GetFullPath());
       wxMemoryOutputStream* subsetStream = subset.CreateSubset(fontStream, subsetGlyphs, false);
-      if (fontStream != NULL)
+      if (deleteFontStream && fontStream != NULL)
       {
         delete fontStream;
       }

@@ -231,6 +231,10 @@ public:
   */
   wxString GetFontFileName() const { return m_fontFileName; }
 
+
+  void SetBytes( std::vector<unsigned char> *b ) { m_fontBytes = b; }
+  std::vector<unsigned char> *GetBytes() const { return m_fontBytes; }
+
   /// Set font index in case the font is member of a font collection
   /**
   * \param fontIndex the index of the font if it is a member of a font collection
@@ -698,6 +702,7 @@ protected:
   bool                  m_subsetSupported; ///< Flag whether subsetting of the font is allowed and supported
 
   wxString              m_fontFileName; ///< Qualified name of the font file
+  std::vector<unsigned char> *m_fontBytes;
   int                   m_fontIndex;    ///< Index of the font in case of a font collection
   wxFont                m_font;         ///< Associated wxFont object (currently used by wxMSW only)
 

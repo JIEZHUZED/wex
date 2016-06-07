@@ -318,11 +318,121 @@ void TestTextLayout()
 	new TextLayoutFrame;
 }
 
+#include <wx/dir.h>
+#include <wx/zipstrm.h>
+#include <wx/buffer.h>
+
+//#include "c:/Users/adobos/Projects/wex/pdffonts/fontdata.h"
+
 void TestFreeTypeText()
 {
 	wxFrame *frame = new wxFrame( 0, wxID_ANY, "FreeType text output", wxDefaultPosition, wxSize(800,800) );
 	new wxFreeTypeDemo( frame );
 	frame->Show();
+
+	wxArrayString msgs;
+	wxString dir;
+	wxGetEnv( "WEXDIR", &dir );
+	wxArrayString files;
+	wxDir::GetAllFiles( dir + "/pdffonts", &files, wxEmptyString, wxDIR_FILES );
+	
+	wxString hfile( dir + "/pdffonts/fontdata.h" );
+	FILE *fp = fopen( hfile, "w" );
+	
+	wxArrayString names, cnames;
+	
+	if ( wxYES == wxMessageBox( wxString::Format( "regenerate binary .h font data file for %d built-in truetype fonts?", files.size()), "Query", wxYES_NO ) )
+	{
+		for( size_t i=0;i<files.size();i++) 
+		{
+			wxFileName fn(files[i]);
+			wxString ext( fn.GetExt().Lower() );
+			if ( ext == "ttf" || ext == "otf" )
+			{
+				wxFFileInputStream in( files[i] );
+				if ( !in.IsOk() ) continue;
+
+				wxFFileOutputStream out( dir + "/pdffonts/" + fn.GetName() + ".z" );
+				wxZlibOutputStream zout( out );
+				zout.Write( in );
+				zout.Close();
+				out.Close();
+			
+				wxString cname( fn.GetName() );
+				cname.Replace( " ", "" );
+				cname.Replace( "-", "_" );
+				cname.MakeLower();
+
+				unsigned long n = 0;
+				fprintf(fp,"static unsigned char %s[] = {\n", (const char*)cname.c_str());
+
+				wxFFileInputStream in2( dir + "/pdffonts/" + fn.GetName() + ".z" );
+				unsigned char byte;
+				in2.Read(&byte,1);
+				while( in2.LastRead() == 1 )
+				{
+					fprintf(fp,"0x%.2X", (int)byte);
+					++n;
+
+					in2.Read(&byte,1);
+					if ( in2.LastRead() != 1 )
+						break;
+					
+					fprintf(fp, "," );
+					if(n % 20 == 0) fprintf(fp,"\n");
+				}
+				
+				fprintf(fp,"};\n");
+				fprintf(fp,"static const int %s_len = %d;\n", (const char*)cname.c_str(), n );
+
+				cnames.Add( cname );
+				names.Add( fn.GetName() );
+				msgs.Add( "loaded: " + fn.GetName() );
+			}
+
+		}
+
+	
+	
+		fprintf( fp, "\nstruct font_data\n" );
+		fprintf( fp, "{\n");
+		fprintf( fp, "  unsigned char *data;\n");
+		fprintf( fp, "  unsigned int len;\n");
+		fprintf( fp, "  const char *face;\n");
+		fprintf( fp, "  const char *family;\n" );
+		fprintf( fp, "  int bold;\n");
+		fprintf( fp, "  int italic;\n");
+		fprintf( fp, "};\n\n");
+		fprintf(fp,"font_data builtinfonts[] = {\n" );
+		for( size_t i=0;i<names.size();i++ )
+		{
+			wxCStrData name = names[i].c_str();
+			wxString family( name );
+			int dash = family.Find( "-" );
+			if ( dash != wxNOT_FOUND )
+			{
+				family.Truncate( dash );
+				family = family.Trim().Trim(false);
+			}
+
+
+			wxCStrData cname = cnames[i];
+			int bold = (cnames[i].Find( "bold" ) != wxNOT_FOUND );
+			int italic = (cnames[i].Find( "italic" ) != wxNOT_FOUND );
+			fprintf(fp, "  { %s, %s_len, \"%s\", \"%s\", %d, %d },\n",
+				(const char*)cname, 
+				(const char*)cname, 
+				(const char*)name,
+				(const char*)family.c_str(),
+				bold, 
+				italic );
+		}
+		fprintf(fp,"  { 0, 0, 0, 0, 0, 0 }\n" );
+		fprintf(fp,"};\n\n" );
+
+		fclose(fp);
+		wxShowTextMessageDialog( wxJoin( msgs, '\n' ) );
+	}
 }
 
 #include <wex/mtrand.h>
@@ -842,16 +952,7 @@ public:
 #endif
 		
 		wxInitAllImageHandlers();
-
-		wxString wexdir;
-		if ( wxGetEnv("WEXDIR", &wexdir) )
-		{
-			if (!wxPLPlot::AddPdfFontDir( wexdir + "/pdffonts" ))
-				wxMessageBox("Could not add font dir: " + wexdir + "/pdffonts" );
-			if (!wxPLPlot::SetPdfDefaultFont( "RalewayThin", 11.0 ) )
-				wxMessageBox("Could not set default pdf font to Computer Modern Sans Serif" );
-		}
-
+		
 		//TestPLPlot( 0 );
 		//TestPLPolarPlot(0);
 		//TestPLBarPlot(0);		

@@ -555,6 +555,14 @@ wxPdfFontParserTrueType::GetCollectionFontCount(const wxString& fontFileName)
 }
 
 wxPdfFontData*
+wxPdfFontParserTrueType::IdentifyFont( wxInputStream &stream, int fontIndex)
+{
+	m_inFont = &stream;
+	m_inFont->SeekI( 0 );
+	return IdentifyFont();
+} 
+
+wxPdfFontData*
 wxPdfFontParserTrueType::IdentifyFont(const wxString& fontFileName, int fontIndex)
 {
   bool ok = true;
@@ -643,7 +651,7 @@ wxPdfFontParserTrueType::IdentifyFont(const wxFont& font)
 {
   bool ok = true;
   wxPdfFontData* fontData = NULL;
-  m_fileName = wxEmptyString;
+//  m_fileName = wxEmptyString;
 
   wxMemoryInputStream* fontStream = LoadTrueTypeFontStream(font);
   if (fontStream != NULL)
@@ -765,6 +773,7 @@ wxPdfFontParserTrueType::LoadFontData(wxPdfFontData* fontData)
     int fontIndex = fontData->GetFontIndex();
     m_fileName = fontData->GetFontFileName();
     m_fontName = fontData->GetName();
+	m_fontBytes = fontData->GetBytes();
     if (!m_fileName.IsEmpty())
     {
       wxFileName fileName(m_fileName);
@@ -775,6 +784,11 @@ wxPdfFontParserTrueType::LoadFontData(wxPdfFontData* fontData)
         m_inFont = fontFile->GetStream();
       }
     }
+	else if ( m_fontBytes != 0 )
+	{
+		fontStream = new wxMemoryInputStream( &(*m_fontBytes)[0], m_fontBytes->size() );
+		m_inFont = fontStream;
+	}
     else
     {
 #if defined(__WXMSW__)

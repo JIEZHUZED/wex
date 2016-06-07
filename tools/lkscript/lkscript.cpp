@@ -31,16 +31,7 @@ public:
 		bool run = args.Index("-run") >= 0 ;
 
 		wxInitAllImageHandlers();
-	
-		wxString wexdir;
-		if ( wxGetEnv("WEXDIR", &wexdir) )
-		{
-			if (!wxPLPlot::AddPdfFontDir( wexdir + "/pdffonts" ))
-				wxMessageBox("Could not add font dir: " + wexdir + "/pdffonts" );
-			if (!wxPLPlot::SetPdfDefaultFont( "ComputerModernSansSerif", 10.0 ) )
-				wxMessageBox("Could not set default pdf font to Computer Modern Sans Serif" );
-		}
-		
+			
 		if ( args.size() > 1 )
 		{
 			for( size_t i=1;i<args.size();i++ )
