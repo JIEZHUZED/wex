@@ -860,7 +860,11 @@ m_counter(0)
 
 	//Contains boxes to turn lines on or off.
 	m_srchCtrl = new wxSearchCtrl(this, -1, wxEmptyString, wxDefaultPosition, wxSize(150, -1), 0);
-	m_dataSelector = new wxDVSelectionListCtrl(this, ID_DATA_CHANNEL_SELECTOR, 2);
+	// Note that all timeseries include 4 columns of check boxes
+	// The first 2 columns are to select upper and lower graphs
+	// The last 2 columns are tp select line or area graphs
+	// This feature is only available in time-series
+	m_dataSelector = new wxDVSelectionListCtrl(this, ID_DATA_CHANNEL_SELECTOR, 4);
 	wxBoxSizer * sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->Add(m_srchCtrl, 0, wxALL | wxEXPAND, 0);
 	sizer->Add(m_dataSelector, 0, wxALL | wxALIGN_CENTER, 0);
@@ -1171,10 +1175,21 @@ void wxDVTimeSeriesCtrl::OnDataChannelSelection(wxCommandEvent&)
 
 	m_dataSelector->GetLastEventInfo(&row, &col, &isChecked);
 
-	if (isChecked)
-		AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos(col), row);
-	else
-		RemoveGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos(col), row);
+	if (col == 0 || col == 1) {
+		if (isChecked) {
+			AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos(col), row);
+		}
+		else {
+			RemoveGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos(col), row);
+		}
+	}
+	else if (col == 2 || col == 3) {
+		SelectGraphType(wxPLPlotCtrl::PlotPos(col), row, isChecked);
+	}
+	else {
+		// should never get here
+		assert(false);
+	}
 }
 
 void wxDVTimeSeriesCtrl::AddDataSet(wxDVTimeSeriesDataSet *d, bool refresh_ui)
@@ -1937,6 +1952,16 @@ void wxDVTimeSeriesCtrl::AutoscaleYAxis(wxPLAxis *axisToScale, const std::vector
 	{
 		wxPLAxis::ExtendBoundsToNiceNumber(&dataMax, &dataMin);
 		axisToScale->SetWorld(dataMin, dataMax);
+	}
+}
+
+void wxDVTimeSeriesCtrl::SelectGraphType(wxPLPlotCtrl::PlotPos pPos, int index, bool isLine)
+{
+	if (index < 0 || index >= (int)m_plots.size()) return;
+
+	if (isLine) {
+	}
+	else { // is Area
 	}
 }
 

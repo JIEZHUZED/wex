@@ -229,6 +229,7 @@ private:
 
 	void AddGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos pPos, int index);
 	void RemoveGraphAfterChannelSelection(wxPLPlotCtrl::PlotPos pPos, int index);
+	void SelectGraphType(wxPLPlotCtrl::PlotPos pPos, int index, bool isLine);
 	void SetYAxisLabelText();
 	void ClearAllChannelSelections(wxPLPlotCtrl::PlotPos pPos);
 	void RefreshDisabledCheckBoxes();

@@ -97,7 +97,7 @@ protected:
 	virtual wxSize DoGetBestSize() const;
 
 private:
-	static const int NMAXCOLS = 4;
+	static const int NMAXCOLS = 5; // This actually caps the number of cols to NMAXCOLS - 1, or 4
 
 	unsigned long m_style;
 	int m_numCols;
