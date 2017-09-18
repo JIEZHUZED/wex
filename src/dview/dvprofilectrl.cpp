@@ -641,54 +641,61 @@ void wxDVProfileCtrl::ShowPlotAtIndex(int i)
 	double yaxisMax = 0, yaxisMin = 0;
 	for (int j = 0; j < 13; j++)
 	{
-		m_plots[i]->plots[j]->ExtendMinMax(NULL, NULL, &yaxisMin, &yaxisMax);
-		m_plots[i]->plots[j]->SetColour(m_dataSelector->GetColourForIndex(i));
-		wxString units = m_plots[i]->dataset->GetUnits();
-		wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
-		if (m_plotSurfaces[j]->GetYAxis1())
-			y1Units = m_plotSurfaces[j]->GetYAxis1()->GetUnits();
-		if (m_plotSurfaces[j]->GetYAxis2())
-			y2Units = m_plotSurfaces[j]->GetYAxis2()->GetUnits();
-		if (m_plotSurfaces[j]->GetYAxis1() && y1Units == units)
-			yap = wxPLPlotCtrl::Y_LEFT;
-		else if (m_plotSurfaces[j]->GetYAxis2() && y2Units == units)
-			yap = wxPLPlotCtrl::Y_RIGHT;
-		else if (m_plotSurfaces[j]->GetYAxis1() == 0)
-			yap = wxPLPlotCtrl::Y_LEFT;
-		else
-			yap = wxPLPlotCtrl::Y_RIGHT;
-		m_plotSurfaces[j]->AddPlot(m_plots[i]->plots[j], wxPLPlotCtrl::X_BOTTOM, yap);
-		m_plotSurfaces[j]->GetAxis(yap)->SetUnits(units);
-		YLabelText = units;
-		for (int k = 0; k < m_dataSelector->Length(); k++)
-		{
-			if (m_dataSelector->IsSelected(k, 0) && m_plots[i]->dataset->GetUnits() == units)
+		if (m_plots[i] != nullptr && m_plots[i]->plots[j] != nullptr) {
+			m_plots[i]->plots[j]->ExtendMinMax(NULL, NULL, &yaxisMin, &yaxisMax);
+			m_plots[i]->plots[j]->SetColour(m_dataSelector->GetColourForIndex(i));
+			wxString units = m_plots[i]->dataset->GetUnits();
+			wxString y1Units = NO_UNITS, y2Units = NO_UNITS;
+			if (m_plotSurfaces[j]->GetYAxis1())
+				y1Units = m_plotSurfaces[j]->GetYAxis1()->GetUnits();
+			if (m_plotSurfaces[j]->GetYAxis2())
+				y2Units = m_plotSurfaces[j]->GetYAxis2()->GetUnits();
+			if (m_plotSurfaces[j]->GetYAxis1() && y1Units == units)
+				yap = wxPLPlotCtrl::Y_LEFT;
+			else if (m_plotSurfaces[j]->GetYAxis2() && y2Units == units)
+				yap = wxPLPlotCtrl::Y_RIGHT;
+			else if (m_plotSurfaces[j]->GetYAxis1() == 0)
+				yap = wxPLPlotCtrl::Y_LEFT;
+			else
+				yap = wxPLPlotCtrl::Y_RIGHT;
+			m_plotSurfaces[j]->AddPlot(m_plots[i]->plots[j], wxPLPlotCtrl::X_BOTTOM, yap);
+			m_plotSurfaces[j]->GetAxis(yap)->SetUnits(units);
+			YLabelText = units;
+			for (int k = 0; k < m_dataSelector->Length(); k++)
 			{
-				if (yap == wxPLPlotCtrl::Y_LEFT)
+				if (m_dataSelector->IsSelected(k, 0) && m_plots[i]->dataset->GetUnits() == units)
 				{
-					NumY1AxisSelections++;
-				}
-				else
-				{
-					NumY2AxisSelections++;
+					if (yap == wxPLPlotCtrl::Y_LEFT)
+					{
+						NumY1AxisSelections++;
+					}
+					else
+					{
+						NumY2AxisSelections++;
+					}
 				}
 			}
+			if ((NumY1AxisSelections == 1 && yap == wxPLPlotCtrl::Y_LEFT) || (NumY2AxisSelections == 1 && yap == wxPLPlotCtrl::Y_RIGHT))
+			{
+				YLabelText = m_plots[i]->dataset->GetLabel(); // warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
+			}
+			m_plotSurfaces[j]->GetAxis(yap)->SetLabel(YLabelText);
+			m_plotSurfaces[j]->GetXAxis1()->SetWorld(0, 24);
+			m_plotSurfaces[j]->GetXAxis1()->ShowLabel(false);
+			m_plotSurfaces[j]->GetYAxis1()->ShowLabel(false);
+			if (m_plotSurfaces[j]->GetYAxis2())
+				m_plotSurfaces[j]->GetYAxis2()->ShowLabel(false);
 		}
-		if ((NumY1AxisSelections == 1 && yap == wxPLPlotCtrl::Y_LEFT) || (NumY2AxisSelections == 1 && yap == wxPLPlotCtrl::Y_RIGHT))
-		{
-			YLabelText = m_plots[i]->dataset->GetLabel(); // warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
-		}
-		m_plotSurfaces[j]->GetAxis(yap)->SetLabel(YLabelText);
-		m_plotSurfaces[j]->GetXAxis1()->SetWorld(0, 24);
-		m_plotSurfaces[j]->GetXAxis1()->ShowLabel(false);
-		m_plotSurfaces[j]->GetYAxis1()->ShowLabel(false);
-		if (m_plotSurfaces[j]->GetYAxis2())
-			m_plotSurfaces[j]->GetYAxis2()->ShowLabel(false);
 	}
 	m_plots[i]->axisPosition = yap;
-	for (int j = 0; j < 13; j++)
-		m_plotSurfaces[j]->GetAxis(yap)->SetWorld(yaxisMin, yaxisMax);
-	m_leftAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis1()->GetLabel(), 90);
+	for (int j = 0; j < 13; j++) {
+		if (m_plotSurfaces[j] != nullptr && m_plotSurfaces[j]->GetAxis(yap) != nullptr) {
+			m_plotSurfaces[j]->GetAxis(yap)->SetWorld(yaxisMin, yaxisMax);
+		}
+	}
+	if (m_leftAxisLabel != nullptr && m_plotSurfaces[0] != nullptr && m_plotSurfaces[0]->GetYAxis1() != nullptr) {
+		m_leftAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis1()->GetLabel(), 90);
+	}
 	if (m_plotSurfaces[0]->GetYAxis2()
 		&& m_plotSurfaces[0]->GetYAxis2()->GetLabel() != m_plotSurfaces[0]->GetYAxis1()->GetLabel())
 		m_rightAxisLabel->SetLabelText(m_plotSurfaces[0]->GetYAxis2()->GetLabel(), 270);
@@ -861,10 +868,14 @@ void wxDVProfileCtrl::AutoScaleYAxes()
 			switch (m_plots[currently_shown[j]]->axisPosition)
 			{
 			case wxPLPlotCtrl::Y_LEFT:
-				m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &leftYAxisMin, &leftYAxisMax, true);
+				if (m_plots[currently_shown[j]] != nullptr && m_plots[currently_shown[j]]->plots[i] != nullptr) {
+					m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &leftYAxisMin, &leftYAxisMax, true);
+				}
 				break;
 			case wxPLPlotCtrl::Y_RIGHT:
-				m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &rightYAxisMin, &rightYAxisMax, true);
+				if (m_plots[currently_shown[j]] != nullptr && m_plots[currently_shown[j]]->plots[i] != nullptr) {
+					m_plots[currently_shown[j]]->plots[i]->ExtendMinMax(NULL, NULL, &rightYAxisMin, &rightYAxisMax, true);
+				}
 				break;
 				//We don't care about x-axis.  It WILL be Y.
 			case wxPLPlotCtrl::X_BOTTOM:

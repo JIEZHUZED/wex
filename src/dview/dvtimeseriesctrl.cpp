@@ -259,9 +259,10 @@ public:
 					else
 						points.push_back(map.ToDevice(p));
 				}
-
-				points.push_back(wxRealPoint(points[points.size() - 1].x, map.ToDevice(wxRealPoint(0, 0)).y));
-				points.push_back(wxRealPoint(points[0].x, map.ToDevice(wxRealPoint(0, 0)).y));
+				if (points.size() > 0) {
+					points.push_back(wxRealPoint(points[points.size() - 1].x, map.ToDevice(wxRealPoint(0, 0)).y));
+					points.push_back(wxRealPoint(points[0].x, map.ToDevice(wxRealPoint(0, 0)).y));
+				}
 			}
 
 			wxRealPoint pos, size;
