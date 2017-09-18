@@ -332,6 +332,7 @@ void wxDVProfileCtrl::ReadState(std::string filename)
 
 	if (GetDataSelectionList()->GetSelectedNamesInCol().size() == 0){
 		SelectDataSetAtIndex(0);
+		m_selections.push_back(0);
 	}
 
 	m_counter = 0;
