@@ -1778,6 +1778,8 @@ const wxPoint &pos, const wxSize &size, unsigned long libs)
 		RegisterLibrary(wxLKFileFunctions(), "Data File Functions", this);
 	if (libs & wxLK_STDLIB_SOUT)
 		RegisterLibrary(wxLKStdOutFunctions(), "BIOS Functions", this);
+	if (libs & wxLK_STDLIB_THREAD)
+		RegisterLibrary(lk::stdlib_thread(), "Threading Functions", this);
 
 	wxFont font(*wxNORMAL_FONT);
 	AnnotationSetStyleOffset(512);
@@ -2485,7 +2487,7 @@ class wxLKScriptWindow::MyScriptCtrl : public wxLKScriptCtrl
 public:
 	MyScriptCtrl(wxWindow *parent, int id, wxLKScriptWindow *scriptwin)
 		: wxLKScriptCtrl(parent, id, wxDefaultPosition, wxDefaultSize,
-		(wxLK_STDLIB_ALL | wxLK_STDLIB_SOUT)),
+		(wxLK_STDLIB_ALL | wxLK_STDLIB_SOUT | wxLK_STDLIB_THREAD)),
 		m_scriptwin(scriptwin)
 	{
 		ShowFindInFilesButton(true);

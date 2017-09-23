@@ -46,6 +46,7 @@
 #define wxLK_STDLIB_MISC   0x0040
 #define wxLK_STDLIB_FILE   0x0080
 #define wxLK_STDLIB_SOUT   0x0100 // out,outln via wxLKScriptCtrl::OnOutput() virtual method
+#define wxLK_STDLIB_THREAD   0x0101 // threaded testing
 
 #define wxLK_STDLIB_ALL \
 	(wxLK_STDLIB_BASIC|wxLK_STDLIB_SYSIO|wxLK_STDLIB_STRING \
