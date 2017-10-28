@@ -1763,7 +1763,6 @@ public:
 //				Dismiss(); - Windows 10 1709 update fix.
 				if (HasCapture())
 					ReleaseMouse();
-				
 				Hide();
 //
 				return;
