@@ -30,6 +30,7 @@
 #include <wx/tokenzr.h>
 #include <wx/renderer.h>
 #include <wx/hyperlink.h>
+#include <wx/txtstrm.h>
 
 #include <wex/extgrid.h>
 #include <wex/label.h>
@@ -1022,7 +1023,8 @@ wxImage wxUIProperty::GetImage()
 
 void wxUIProperty::Write(wxOutputStream &_o)
 {
-	wxDataOutputStream out(_o);
+//	wxDataOutputStream out(_o);
+	wxTextOutputStream out(_o);
 	int type = GetType();
 	out.Write8(0x1d);
 	out.Write16((wxUint16)type);
@@ -1322,7 +1324,8 @@ wxArrayString wxUIObject::Properties()
 
 void wxUIObject::Write(wxOutputStream &_o)
 {
-	wxDataOutputStream out(_o);
+//	wxDataOutputStream out(_o);
+	wxTextOutputStream out(_o);
 	out.Write8(0xaf); // start code
 	out.Write8(1); // version
 
@@ -1840,7 +1843,8 @@ void wxUIFormData::Detach()
 // load/save form definition
 void wxUIFormData::Write(wxOutputStream &_O)
 {
-	wxDataOutputStream out(_O);
+//	wxDataOutputStream out(_O);
+	wxTextOutputStream out(_O);
 
 	out.Write8(0xd7); // code
 	out.Write8(1); // version
