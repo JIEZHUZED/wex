@@ -41,3 +41,4 @@ branches:
   only:
   - master
   - develop
+  - ui_as_text
