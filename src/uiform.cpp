@@ -43,6 +43,7 @@
 #include <algorithm>
 
 static wxColour g_uiSelectColor(135, 135, 135);
+static wxChar g_text_delimeter('\t');
 
 class wxUIButtonObject : public wxUIObject
 {
@@ -1062,47 +1063,6 @@ void wxUIProperty::Write(wxOutputStream &_o)
 }
 
 
-void wxUIProperty::Write_text(wxOutputStream &_o)
-{
-	wxTextOutputStream out(_o);
-	int type = GetType();
-	out.Write8(0x1d);
-	out.Write16((wxUint16)type);
-	switch (type)
-	{
-	case DOUBLE: out.WriteDouble(GetDouble()); break;
-	case BOOLEAN: out.Write8(GetBoolean() ? 1 : 0); break;
-	case INTEGER: out.Write32(GetInteger()); break;
-	case STRING: out.WriteString(GetString()); break;
-	case COLOUR:
-	{
-		wxColour c = GetColour();
-		out.Write8(c.Red());
-		out.Write8(c.Green());
-		out.Write8(c.Blue());
-		out.Write8(c.Alpha());
-	}
-	break;
-	case STRINGLIST:
-	{
-		wxArrayString list = GetStringList();
-		out.Write32(list.Count());
-		for (size_t i = 0; i < list.Count(); i++)
-			out.WriteString(list[i]);
-	}
-	break;
-	case IMAGE:
-	{
-		wxImage img = GetImage();
-		wxPNGHandler().SaveFile(&img, _o, false);
-	}
-	break;
-	}
-
-	out.Write8(0x1d);
-}
-
-
 bool wxUIProperty::Read(wxInputStream &_i)
 {
 	wxDataInputStream in(_i);
@@ -1152,14 +1112,83 @@ bool wxUIProperty::Read(wxInputStream &_i)
 
 
 
+void wxUIProperty::Write_text(wxOutputStream &_o)
+{
+	wxTextOutputStream out(_o);
+	int type = GetType();
+	//	out.Write8(0x1d);
+	out.Write16((wxUint16)type);
+	out.PutChar(g_text_delimeter);
+	switch (type)
+	{
+	case DOUBLE: 
+	{
+		out.WriteDouble(GetDouble());
+		out.PutChar(g_text_delimeter);
+	}
+	break;
+	case BOOLEAN: 
+	{
+		out.Write8(GetBoolean() ? 1 : 0);
+		out.PutChar(g_text_delimeter);
+	}
+	break;
+	case INTEGER: 
+	{
+		out.Write32(GetInteger());
+		out.PutChar(g_text_delimeter);
+	}
+	break;
+	case STRING: 
+	{
+		out.WriteString(GetString());
+		out.PutChar(g_text_delimeter);
+	}
+	break;
+	case COLOUR:
+	{
+		wxColour c = GetColour();
+		out.Write8(c.Red());
+		out.PutChar(g_text_delimeter);
+		out.Write8(c.Green());
+		out.PutChar(g_text_delimeter);
+		out.Write8(c.Blue());
+		out.PutChar(g_text_delimeter);
+		out.Write8(c.Alpha());
+		out.PutChar(g_text_delimeter);
+	}
+	break;
+	case STRINGLIST:
+	{
+		wxArrayString list = GetStringList();
+		out.Write32(list.Count());
+		out.PutChar(g_text_delimeter);
+		for (size_t i = 0; i < list.Count(); i++)
+		{
+			out.WriteString(list[i]);
+			out.PutChar(g_text_delimeter);
+		}
+	}
+	break;
+	case IMAGE:
+	{
+		wxImage img = GetImage();
+		wxPNGHandler().SaveFile(&img, _o, false);
+	}
+	break;
+	}
+
+	//	out.Write8(0x1d);
+}
 
 bool wxUIProperty::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i);
+	wxTextInputStream in(_i, "\t");
 
-	wxUint8 code = in.Read8();
+//	wxUint8 code = in.Read8();
 	wxUint16 type = in.Read16();
 
+	bool ok = true;
 	if (m_pReference)
 		m_pReference->m_type = type;
 	else
@@ -1171,7 +1200,7 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	case DOUBLE: Set(in.ReadDouble()); break;
 	case BOOLEAN: Set(in.Read8() != 0 ? true : false); break;
 	case INTEGER: Set((int)in.Read32()); break;
-	case STRING: Set(in.ReadLine()); break;
+	case STRING: Set(in.ReadWord()); break;
 	case COLOUR:
 		r = in.Read8();
 		g = in.Read8();
@@ -1184,7 +1213,7 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 		wxArrayString list;
 		size_t count = in.Read32();
 		for (size_t i = 0; i < count; i++)
-			list.Add(in.ReadLine());
+			list.Add(in.ReadWord());
 		Set(list);
 	}
 	break;
@@ -1197,7 +1226,8 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	break;
 	}
 
-	return (code == in.Read8());
+	return ok;
+//	return (code == in.Read8());
 }
 
 
@@ -1432,24 +1462,6 @@ void wxUIObject::Write(wxOutputStream &_o)
 	out.Write8(0xaf);
 }
 
-void wxUIObject::Write_text(wxOutputStream &_o)
-{
-	wxTextOutputStream out(_o);
-	out.Write8(0xaf); // start code
-	out.Write8(1); // version
-
-	out.Write8(m_visible ? 1 : 0);
-
-	out.Write32(m_properties.size());
-	for (size_t i = 0; i < m_properties.size(); i++)
-	{
-		out.WriteString(m_properties[i].name);
-		m_properties[i].prop->Write_text(_o);
-	}
-
-	out.Write8(0xaf);
-}
-
 bool wxUIObject::Read(wxInputStream &_i)
 {
 	wxDataInputStream in(_i);
@@ -1468,22 +1480,46 @@ bool wxUIObject::Read(wxInputStream &_i)
 	return in.Read8() == code;
 }
 
+void wxUIObject::Write_text(wxOutputStream &_o)
+{
+	wxTextOutputStream out(_o);
+//	out.Write8(0xaf); // start code
+	out.Write8(1); // version
+	out.PutChar(g_text_delimeter);
+	out.Write8(m_visible ? 1 : 0);
+	out.PutChar(g_text_delimeter);
+
+	out.Write32(m_properties.size());
+	out.PutChar(g_text_delimeter);
+	for (size_t i = 0; i < m_properties.size(); i++)
+	{
+		out.WriteString(m_properties[i].name);
+		out.PutChar(g_text_delimeter);
+		m_properties[i].prop->Write_text(_o);
+	}
+
+//	out.Write8(0xaf);
+}
+
 bool wxUIObject::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i);
-	wxUint8 code = in.Read8();
+	wxTextInputStream in(_i, "\t");
+//	wxUint8 code = in.Read8();
 	in.Read8(); // version
 
 	m_visible = in.Read8() != 0;
 
+	bool ok = true;
+
 	size_t n = in.Read32();
 	for (size_t i = 0; i < n; i++)
 	{
-		wxString name = in.ReadLine();
-		Property(name).Read_text(_i);
+		wxString name = in.ReadWord();
+		ok = ok && Property(name).Read_text(_i);
 	}
 
-	return in.Read8() == code;
+	return ok;
+//	return in.Read8() == code;
 }
 
 void wxUIObject::AddProperty(const wxString &name, wxUIProperty *prop)
@@ -1990,28 +2026,6 @@ void wxUIFormData::Write(wxOutputStream &_O)
 	out.Write8(0xd7);
 }
 
-void wxUIFormData::Write_text(wxOutputStream &_O)
-{
-	wxTextOutputStream out(_O);
-
-	out.Write8(0xd7); // code
-	out.Write8(1); // version
-
-	out.WriteString(m_name);
-	out.Write32(m_width);
-	out.Write32(m_height);
-
-	out.Write32(m_objects.size());
-
-	for (size_t i = 0; i < m_objects.size(); i++)
-	{
-		out.WriteString(m_objects[i]->GetTypeName());
-		m_objects[i]->Write_text(_O);
-	}
-
-	out.Write8(0xd7);
-}
-
 bool wxUIFormData::Read(wxInputStream &_I)
 {
 	DeleteAll();
@@ -2039,16 +2053,43 @@ bool wxUIFormData::Read(wxInputStream &_I)
 	return (in.Read8() == code && ok);
 }
 
+void wxUIFormData::Write_text(wxOutputStream &_O)
+{
+	wxTextOutputStream out(_O);
+
+	//	out.Write8(0xd7); // code
+	//	out.Write8(1); // version
+
+	out.WriteString(m_name);
+	out.PutChar(g_text_delimeter);
+	out.Write32(m_width);
+	out.PutChar(g_text_delimeter);
+	out.Write32(m_height);
+	out.PutChar(g_text_delimeter);
+
+	out.Write32(m_objects.size());
+	out.PutChar(g_text_delimeter);
+
+	for (size_t i = 0; i < m_objects.size(); i++)
+	{
+		out.WriteString(m_objects[i]->GetTypeName());
+		out.PutChar(g_text_delimeter);
+		m_objects[i]->Write_text(_O);
+	}
+
+	//	out.Write8(0xd7);
+}
+
 bool wxUIFormData::Read_text(wxInputStream &_I)
 {
 	DeleteAll();
 
-	wxTextInputStream in(_I);
+	wxTextInputStream in(_I, "\t");
 
-	wxUint8 code = in.Read8();
-	in.Read8(); // version
+//	wxUint8 code = in.Read8();
+//	in.Read8(); // version
 
-	m_name = in.ReadLine();
+	m_name = in.ReadWord();
 	m_width = in.Read32();
 	m_height = in.Read32();
 
@@ -2056,14 +2097,15 @@ bool wxUIFormData::Read_text(wxInputStream &_I)
 	size_t n = in.Read32();
 	for (size_t i = 0; i < n; i++)
 	{
-		wxString type = in.ReadLine();
+		wxString type = in.ReadWord();
 		if (wxUIObject *obj = Create(type))
 			ok = ok && obj->Read_text(_I);
 		else
 			ok = false;
 	}
 
-	return (in.Read8() == code && ok);
+	return ok;
+//	return (in.Read8() == code && ok);
 }
 
 // methods to create/edit UI objects
