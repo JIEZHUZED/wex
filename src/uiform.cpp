@@ -43,7 +43,7 @@
 #include <algorithm>
 
 static wxColour g_uiSelectColor(135, 135, 135);
-static wxChar g_text_delimeter('\t');
+static wxChar g_text_delimeter('|');
 
 class wxUIButtonObject : public wxUIObject
 {
@@ -1183,7 +1183,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 
 bool wxUIProperty::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i, "\t");
+	wxTextInputStream in(_i, "|");
 
 //	wxUint8 code = in.Read8();
 	wxUint16 type = in.Read16();
@@ -1503,7 +1503,7 @@ void wxUIObject::Write_text(wxOutputStream &_o)
 
 bool wxUIObject::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i, "\t");
+	wxTextInputStream in(_i, "|");
 //	wxUint8 code = in.Read8();
 	in.Read8(); // version
 
@@ -2084,7 +2084,7 @@ bool wxUIFormData::Read_text(wxInputStream &_I)
 {
 	DeleteAll();
 
-	wxTextInputStream in(_I, "\t");
+	wxTextInputStream in(_I, "|");
 
 //	wxUint8 code = in.Read8();
 //	in.Read8(); // version
