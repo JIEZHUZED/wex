@@ -1115,6 +1115,7 @@ bool wxUIProperty::Read(wxInputStream &_i)
 void wxUIProperty::Write_text(wxOutputStream &_o)
 {
 	wxTextOutputStream out(_o);
+	wxString s = wxEmptyString;
 	int type = GetType();
 	//	out.Write8(0x1d);
 	out.Write16((wxUint16)type);
@@ -1141,7 +1142,11 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 	break;
 	case STRING: 
 	{
-		out.WriteString(GetString());
+		s = GetString();
+		if (s.Len() > 0)
+			out.WriteString(s);
+		else 
+			out.WriteString(" ");
 		out.PutChar(g_text_delimeter);
 	}
 	break;
