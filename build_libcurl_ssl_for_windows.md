@@ -1,4 +1,4 @@
-# Building libcurl+ssl using VS 2017 Community Edition
+﻿# Building libcurl+ssl using VS 2017 Community Edition
 
 Adapated from Aron P. Dobos, originally written in October 2013 and updated March 2017
 
@@ -61,11 +61,13 @@ Adapated from Aron P. Dobos, originally written in October 2013 and updated Marc
 
 20.	Right click on ‘libssh2’ in the solution explorer, and select ‘Properties’.
 
-	a.	Under ‘C/C++/General/Additional Include Directories’, add c:\curl\openssl_dll\include;
+	a.	Under ‘General/Windows SDK Version’, select the most recent version
+
+	b.	Under ‘C/C++/General/Additional Include Directories’, add c:\curl\openssl_dll\include;
 	
-	b.	Under ‘Linker/General/Additional Library Directories’, add c:\curl\openssl_dll\lib;
+	c.	Under ‘Linker/General/Additional Library Directories’, add c:\curl\openssl_dll\lib;
 	
-	c.	Under ‘Linker/Input’, remove zlib.lib.
+	d.	Under ‘Linker/Input’, remove zlib.lib.
 
 21.	In libssh2_config.h, comment out line 25 to prevent conflict with snprintf defined in stdio.h	
 
@@ -165,11 +167,13 @@ Adapated from Aron P. Dobos, originally written in October 2013 and updated Marc
 
 21.	Right click on ‘libssh2’ in the solution explorer, and select ‘Properties’
 
-	a.	Under ‘C/C++/General/Additional Include Directories’, add c:\curl\openssl_dll\include;
+	a.	Under ‘General/Windows SDK Version’, select the most recent version
 
-	b.	Under ‘Linker/General/Additional Library Directories’, add c:\curl\openssl_dll\lib;
+	b.	Under ‘C/C++/General/Additional Include Directories’, add c:\curl\openssl_dll\include;
 
-	c.	Under ‘Linker/Input’, remove zlib.lib
+	c.	Under ‘Linker/General/Additional Library Directories’, add c:\curl\openssl_dll\lib;
+
+	d.	Under ‘Linker/Input’, remove zlib.lib
 
 22.	In libssh2_config.h, comment out line 25 to prevent conflict with snprintf defined in stdio.h
 
@@ -182,6 +186,8 @@ Adapated from Aron P. Dobos, originally written in October 2013 and updated Marc
 26.	In solution explorer, select properties of ‘libcurl’.
 
 27.	In General, select Configuration Type = ‘Dynamic Library (.dll)’, then click “Apply” in the dialog
+	
+	a.	Under ‘General/Windows SDK Version’, select the most recent version
 
 28.	Under C/C++/General/Additional Include Directories, add C:\curl\openssl-1.0.1c\inc32\;C:\curl\libssh2-1.4.2\include; c:\curl\openssl_lib\include\; c:\curl\openssl_lib\include\openssl
 
