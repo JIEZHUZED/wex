@@ -480,6 +480,45 @@ bool wxExcelAutomation::SetSelectedCellsFontSize(int sz)
 	return m_pdispWorksheet->PutProperty("Cells.Font.Size", 1, m_argList);
 }
 
+bool wxExcelAutomation::getUsedCellRange( int row, int col)
+{
+	if (!m_pdispWorksheet)
+	{
+		m_errStr = "No active worksheet, cannot set cell";
+		return false;
+	}
+
+	ClearArgs();
+	m_argList[0] = wxString("UsedRange");
+	if (!m_pdispWorksheet->Invoke("UsedRange", DISPATCH_PROPERTYGET, m_retVal, 1, m_argList))
+	{
+		m_errStr = "Could not get 'UsedRange' object ref.";
+		return false;
+	}
+
+
+	wxAutomationObject raobj;
+	raobj.SetDispatchPtr((WXIDISPATCH*)m_retVal.GetVoidPtr());
+
+	raobj.SetDispatchPtr((WXIDISPATCH*)m_retVal.GetVoidPtr());
+	m_retVal.Clear();
+	if (!raobj.Invoke("Columns", DISPATCH_PROPERTYGET, m_retVal, 0, NULL))
+	{
+		m_errStr.Format("Could not get ");
+		return false;
+	}
+	row = m_retVal.GetInteger();
+
+	/*wxString type = m_retVal.GetType().Lower();
+	type.Replace(" ", "");
+	if (type == "void*")
+		val = "";
+	else
+		val = m_retVal.GetString();*/
+
+	return true;
+}
+
 bool wxExcelAutomation::SetCellValue(int row, int col, const wxString &val)
 {
 	if (!m_pdispWorksheet)
