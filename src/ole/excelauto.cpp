@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <wx/clipbrd.h>
 #include <wx/msw/ole/oleutils.h>
 
@@ -480,45 +482,6 @@ bool wxExcelAutomation::SetSelectedCellsFontSize(int sz)
 	return m_pdispWorksheet->PutProperty("Cells.Font.Size", 1, m_argList);
 }
 
-bool wxExcelAutomation::getUsedCellRange( int row, int col)
-{
-	if (!m_pdispWorksheet)
-	{
-		m_errStr = "No active worksheet, cannot set cell";
-		return false;
-	}
-
-	ClearArgs();
-	m_argList[0] = wxString("UsedRange");
-	if (!m_pdispWorksheet->Invoke("UsedRange", DISPATCH_PROPERTYGET, m_retVal, 1, m_argList))
-	{
-		m_errStr = "Could not get 'UsedRange' object ref.";
-		return false;
-	}
-
-
-	wxAutomationObject raobj;
-	raobj.SetDispatchPtr((WXIDISPATCH*)m_retVal.GetVoidPtr());
-
-	raobj.SetDispatchPtr((WXIDISPATCH*)m_retVal.GetVoidPtr());
-	m_retVal.Clear();
-	if (!raobj.Invoke("Columns", DISPATCH_PROPERTYGET, m_retVal, 0, NULL))
-	{
-		m_errStr.Format("Could not get ");
-		return false;
-	}
-	row = m_retVal.GetInteger();
-
-	/*wxString type = m_retVal.GetType().Lower();
-	type.Replace(" ", "");
-	if (type == "void*")
-		val = "";
-	else
-		val = m_retVal.GetString();*/
-
-	return true;
-}
-
 bool wxExcelAutomation::SetCellValue(int row, int col, const wxString &val)
 {
 	if (!m_pdispWorksheet)
@@ -758,6 +721,79 @@ bool wxExcelAutomation::GetRangeValue(const wxString &range, wxString &val)
 		val = "";
 	else
 		val = m_retVal.GetString();
+
+	return true;
+}
+
+
+bool wxExcelAutomation::getUsedCellRange(int& row, int& col, wxArrayString& val)
+{
+	if (!m_pdispWorksheet)
+	{
+		m_errStr = "No active worksheet, cannot set cell";
+		return false;
+	}
+	wxAutomationObject raobj;
+	ClearArgs();
+
+	if (!m_pdispWorksheet->GetObject(raobj, "UsedRange"))
+	{
+		m_errStr = "Failed to access range UsedRange";
+		return false;
+	}
+
+	col = (int)raobj.GetProperty("Columns.Count").GetLong();
+	row = (int)raobj.GetProperty("Rows.Count").GetLong();
+
+	m_retVal.Clear();
+	m_retVal.GetType() == wxS("safearray");
+	raobj.SetConvertVariantFlags(wxOleConvertVariant_ReturnSafeArrays);
+	if (!raobj.Invoke("Value", DISPATCH_PROPERTYGET, m_retVal, 0, NULL))
+	{
+		m_errStr.Format("Could not get Value from UsedRange object");
+		return false;
+	}
+
+	SAFEARRAY* returnedData = dynamic_cast<wxVariantDataSafeArray*>(m_retVal.GetData())->GetValue();
+	VARIANT* data = static_cast<VARIANT*>(returnedData->pvData);
+
+	size_t maxRows = 0;
+	size_t maxCols = 0;
+	for (size_t c = 0; c < col; c++) {
+		size_t nRows = 0;
+		for (size_t r = 0; r < row; r++) {
+			if (data[row*c + r].vt != VT_EMPTY) nRows++;
+		}
+		if (nRows > 0) maxCols++;
+		maxRows = (maxRows >= nRows) ? maxRows : nRows;
+	}
+
+	// vals is column-major order
+	size_t dimRows = returnedData->rgsabound[1].cElements;
+	for (size_t c= 0; c < maxCols; c++) {
+		for (size_t r = 0; r < maxRows; r++) {
+			size_t rc = c*dimRows + r;
+			int type = data[rc].vt;
+			if (type == VT_BSTR) {
+				int len = wcslen(data[rc].bstrVal);
+				char* str = new char[len + 1];
+				wcstombs(str, data[rc].bstrVal, len + 1);
+				wxString strVal(str);
+				delete[] str;
+				val.push_back(strVal);
+			}
+			else if (type == VT_R8) {
+				double numVal = data[rc].dblVal;
+				val.push_back(wxString::Format(wxT("%f"), numVal));
+			}
+			else if (type == VT_EMPTY) {
+				int numVal = 0;
+				val.push_back(wxString::Format(wxT("%d"), numVal));
+			}
+		}
+	}
+	row = maxRows;
+	col = maxCols;
 
 	return true;
 }
