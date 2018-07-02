@@ -141,6 +141,17 @@ bool wxExcelAutomation::Show(bool b)
 	}
 }
 
+bool wxExcelAutomation::SaveClose(const wxString& file) {
+	if (!m_pdispExcelApp)
+	{
+		m_errStr = "Excel OLE not initialized.";
+		return false;
+	}
+	m_pdispExcelApp->CallMethod("ActiveWorkbook.SaveAs", file);
+	CloseWorkbookNoSave();
+	return true;
+}
+
 bool wxExcelAutomation::CloseAllNoSave()
 {
 	int count = 0;
@@ -787,8 +798,7 @@ bool wxExcelAutomation::getUsedCellRange(int& row, int& col, wxArrayString& val)
 				val.push_back(wxString::Format(wxT("%f"), numVal));
 			}
 			else if (type == VT_EMPTY) {
-				int numVal = 0;
-				val.push_back(wxString::Format(wxT("%d"), numVal));
+				val.push_back(wxEmptyString);
 			}
 		}
 	}
