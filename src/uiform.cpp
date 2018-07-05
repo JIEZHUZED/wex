@@ -43,7 +43,7 @@
 #include <algorithm>
 
 static wxColour g_uiSelectColor(135, 135, 135);
-static wxChar g_text_delimeter('`');
+static wxChar g_text_delimeter('\n');
 
 class wxUIButtonObject : public wxUIObject
 {
@@ -1188,7 +1188,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 
 bool wxUIProperty::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i, "`", wxConvAuto(wxFONTENCODING_UTF8));
+	wxTextInputStream in(_i, "\n", wxConvAuto(wxFONTENCODING_UTF8));
 
 //	wxUint8 code = in.Read8();
 	wxUint16 type = in.Read16();
@@ -1488,7 +1488,7 @@ bool wxUIObject::Read(wxInputStream &_i)
 void wxUIObject::Write_text(wxOutputStream &_o)
 {
 	wxTextOutputStream out(_o);
-//	out.Write8(0xaf); // start code
+	out.Write8(0xaf); // start code
 	out.Write8(1); // version
 	out.PutChar(g_text_delimeter);
 	out.Write8(m_visible ? 1 : 0);
@@ -1508,7 +1508,7 @@ void wxUIObject::Write_text(wxOutputStream &_o)
 
 bool wxUIObject::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i, "`");
+	wxTextInputStream in(_i, "\n");
 //	wxUint8 code = in.Read8();
 	in.Read8(); // version
 
@@ -2089,7 +2089,7 @@ bool wxUIFormData::Read_text(wxInputStream &_I)
 {
 	DeleteAll();
 
-	wxTextInputStream in(_I, "`");
+	wxTextInputStream in(_I, "\n");
 
 //	wxUint8 code = in.Read8();
 //	in.Read8(); // version
