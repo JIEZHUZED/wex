@@ -1188,7 +1188,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 
 bool wxUIProperty::Read_text(wxInputStream &_i)
 {
-	wxTextInputStream in(_i, "`");
+	wxTextInputStream in(_i, "`", wxConvAuto(wxFONTENCODING_UTF8));
 
 //	wxUint8 code = in.Read8();
 	wxUint16 type = in.Read16();
