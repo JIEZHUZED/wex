@@ -1114,7 +1114,7 @@ bool wxUIProperty::Read(wxInputStream &_i)
 
 void wxUIProperty::Write_text(wxOutputStream &_o)
 {
-	wxTextOutputStream out(_o);
+	wxTextOutputStream out(_o, wxEOL_UNIX);
 	wxString s = wxEmptyString;
 	int type = GetType();
 	//	out.Write8(0x1d);
@@ -1487,7 +1487,7 @@ bool wxUIObject::Read(wxInputStream &_i)
 
 void wxUIObject::Write_text(wxOutputStream &_o)
 {
-	wxTextOutputStream out(_o);
+	wxTextOutputStream out(_o, wxEOL_UNIX);
 	out.Write8(0xaf); // start code
 	out.Write8(1); // version
 	out.PutChar(g_text_delimeter);
@@ -2060,7 +2060,7 @@ bool wxUIFormData::Read(wxInputStream &_I)
 
 void wxUIFormData::Write_text(wxOutputStream &_O)
 {
-	wxTextOutputStream out(_O);
+	wxTextOutputStream out(_O, wxEOL_UNIX);
 
 	//	out.Write8(0xd7); // code
 	//	out.Write8(1); // version
