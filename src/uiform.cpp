@@ -22,6 +22,8 @@
 *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **********************************************************************************************************************/
 
+#include <algorithm>
+
 #include <wx/textctrl.h>
 #include <wx/datstrm.h>
 #include <wx/dcbuffer.h>
@@ -31,6 +33,7 @@
 #include <wx/renderer.h>
 #include <wx/hyperlink.h>
 #include <wx/txtstrm.h>
+#include <wx/mstream.h>
 
 #include <wex/extgrid.h>
 #include <wex/label.h>
@@ -40,7 +43,6 @@
 #include <wex/utils.h>
 #include <wex/uiform.h>
 #include <wex/diurnal.h>
-#include <algorithm>
 
 static wxColour g_uiSelectColor(135, 135, 135);
 static wxChar g_text_delimeter('\n');
@@ -1178,16 +1180,21 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 	case IMAGE:
 	{
 		wxImage img = GetImage();
+		wxMemoryOutputStream stream;
+		if (!img.SaveFile(stream, wxBITMAP_TYPE_PNG))
+			return;
+		// now we can access the saved image bytes:
+		wxStreamBuffer* d = stream.GetOutputStreamBuffer();
+		unsigned char byte; 
 //		wxPNGHandler().SaveFile(&img, _o, false);
-		int w = img.GetWidth();
-		int h = img.GetHeight();
-		// image size should be 3*w*h
-		size_t sz = 3 * w*h;
+		size_t sz = stream.GetSize();
 		out.Write32(sz);
 		out.PutChar(g_text_delimeter);
-		unsigned char* d = img.GetData();
 		for (size_t i = 0; i < sz; i++)
-			out.Write8(d[i]);
+		{
+			if (d->Write(&byte, 1) == 1)
+				out.Write8(byte);
+		}
 		out.PutChar(g_text_delimeter);
 	}
 	break;
@@ -1237,12 +1244,15 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 		wxImage img;
 //		wxPNGHandler().LoadFile(&img, _i, false);
 		size_t sz = in.Read32();
-
-		unsigned char* d;
+		unsigned char *d;
 		d = (unsigned char*)malloc(sizeof(unsigned char)*sz);
 		for (size_t i = 0; i < sz; i++)
-			d[i] = in.Read8();
-		img.SetData(d);
+		{
+				d[i] = in.Read8();
+		}
+
+		wxMemoryInputStream stream((void *)d,sz);
+		img.LoadFile(stream, wxBITMAP_TYPE_PNG);
 		Set(img);
 	}
 	break;
