@@ -1178,7 +1178,17 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 	case IMAGE:
 	{
 		wxImage img = GetImage();
-		wxPNGHandler().SaveFile(&img, _o, false);
+//		wxPNGHandler().SaveFile(&img, _o, false);
+		int w = img.GetWidth();
+		int h = img.GetHeight();
+		// image size should be 3*w*h
+		size_t sz = 3 * w*h;
+		out.Write32(sz);
+		out.PutChar(g_text_delimeter);
+		unsigned char* d = img.GetData();
+		for (size_t i = 0; i < sz; i++)
+			out.Write8(d[i]);
+		out.PutChar(g_text_delimeter);
 	}
 	break;
 	}
@@ -1225,7 +1235,14 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	case IMAGE:
 	{
 		wxImage img;
-		wxPNGHandler().LoadFile(&img, _i, false);
+//		wxPNGHandler().LoadFile(&img, _i, false);
+		size_t sz = in.Read32();
+
+		unsigned char* d;
+		d = (unsigned char*)malloc(sizeof(unsigned char)*sz);
+		for (size_t i = 0; i < sz; i++)
+			d[i] = in.Read8();
+		img.SetData(d);
 		Set(img);
 	}
 	break;
