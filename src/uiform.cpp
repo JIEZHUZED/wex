@@ -34,6 +34,7 @@
 #include <wx/hyperlink.h>
 #include <wx/txtstrm.h>
 #include <wx/mstream.h>
+#include <wx/sstream.h>
 
 #include <wex/extgrid.h>
 #include <wex/label.h>
@@ -1181,20 +1182,49 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 	{
 		wxImage img = GetImage();
 		wxMemoryOutputStream stream;
+//		wxStringOutputStream stream;
 		if (!img.SaveFile(stream, wxBITMAP_TYPE_PNG))
 			return;
+		
 		// now we can access the saved image bytes:
 		wxStreamBuffer* d = stream.GetOutputStreamBuffer();
-		unsigned char byte; 
-//		wxPNGHandler().SaveFile(&img, _o, false);
+//		d->Seek(0, wxFromStart);
+		d->SetIntPosition(0);
+		size_t sd = d->Tell();
+		//unsigned char b;
+		wxUint8 b;
+		//		wxPNGHandler().SaveFile(&img, _o, false);
+		size_t len_d = d->GetBytesLeft();
 		size_t sz = stream.GetSize();
-		out.Write32(sz);
-		out.PutChar(g_text_delimeter);
-		for (size_t i = 0; i < sz; i++)
+//		out.Write32(len_d);
+//		out.PutChar(g_text_delimeter);
+		size_t spos = out.GetOutputStream().TellO();
+		for (size_t i = 0; i < len_d - 1; i++)
 		{
-			if (d->Write(&byte, 1) == 1)
-				out.Write8(byte);
+//			out.Write8(d->GetChar());
+			d->SetIntPosition(i);
+			//			out.Write8(d->GetChar());
+			d->Read(&b, 1);
+			out << b << ",";
+//			out.Write8(b);
+//			out.PutChar(b);
 		}
+		d->SetIntPosition(len_d -1);
+		d->Read(&b, 1);
+		out << b;
+
+		size_t ed = d->Tell();
+		size_t lend = ed - sd;
+
+		size_t epos = out.GetOutputStream().TellO();
+		size_t len = epos - spos;
+		
+		/*
+		size_t spos = out.GetOutputStream().TellO();
+		out.WriteString(stream.GetString());
+		size_t epos = out.GetOutputStream().TellO();
+		size_t len = epos - spos;
+		*/
 		out.PutChar(g_text_delimeter);
 	}
 	break;
@@ -1242,16 +1272,37 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	case IMAGE:
 	{
 		wxImage img;
+/*
 //		wxPNGHandler().LoadFile(&img, _i, false);
 		size_t sz = in.Read32();
+		size_t spos = in.GetInputStream().TellI();
 		unsigned char *d;
 		d = (unsigned char*)malloc(sizeof(unsigned char)*sz);
 		for (size_t i = 0; i < sz; i++)
 		{
-				d[i] = in.Read8();
+//			d[i] = in.Read8(0);
+			d[i] = in.GetChar();
 		}
-
+		size_t epos = in.GetInputStream().TellI();
+		size_t len = epos - spos;
 		wxMemoryInputStream stream((void *)d,sz);
+		*/
+		size_t spos = in.GetInputStream().TellI();
+		wxString img_str = in.ReadWord();
+		wxArrayString ar_str = wxStringTokenize(img_str, ",");
+		size_t sz = ar_str.size();
+		size_t epos = in.GetInputStream().TellI();
+		unsigned char *d;
+		d = (unsigned char*)malloc(sizeof(unsigned char)*sz);
+		for (size_t i = 0; i < sz; i++)
+		{
+			d[i] = (unsigned char)(ar_str[i].mb_str().data());
+		}
+		
+
+
+		wxMemoryInputStream stream((void *)d, sz);
+		size_t len = epos - spos;
 		img.LoadFile(stream, wxBITMAP_TYPE_PNG);
 		Set(img);
 	}
