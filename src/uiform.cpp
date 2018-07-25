@@ -1115,7 +1115,7 @@ bool wxUIProperty::Read(wxInputStream &_i)
 
 
 
-void wxUIProperty::Write_text(wxOutputStream &_o)
+void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 {
 	wxTextOutputStream out(_o, wxEOL_UNIX);
 	wxString s = wxEmptyString;
@@ -1181,7 +1181,11 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 	case IMAGE:
 	{
 		wxImage img = GetImage();
+		img.SaveFile(ui_path + ".png", wxBITMAP_TYPE_PNG);
+		return;
+
 		wxMemoryOutputStream stream;
+
 //		wxStringOutputStream stream;
 		if (!img.SaveFile(stream, wxBITMAP_TYPE_PNG))
 			return;
@@ -1192,26 +1196,30 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 		d->SetIntPosition(0);
 		size_t sd = d->Tell();
 		//unsigned char b;
-		wxUint8 b;
+//		wxUint8 b;
+		char b;
 		//		wxPNGHandler().SaveFile(&img, _o, false);
 		size_t len_d = d->GetBytesLeft();
 		size_t sz = stream.GetSize();
 //		out.Write32(len_d);
 //		out.PutChar(g_text_delimeter);
 		size_t spos = out.GetOutputStream().TellO();
+		wxString bs;
 		for (size_t i = 0; i < len_d - 1; i++)
 		{
 //			out.Write8(d->GetChar());
 			d->SetIntPosition(i);
 			//			out.Write8(d->GetChar());
 			d->Read(&b, 1);
-			out << b << ",";
+			bs = wxString::From8BitData(&b);
+			out << bs << ",";
 //			out.Write8(b);
 //			out.PutChar(b);
 		}
 		d->SetIntPosition(len_d -1);
 		d->Read(&b, 1);
-		out << b;
+		bs = wxString::From8BitData(&b);
+		out << bs;
 
 		size_t ed = d->Tell();
 		size_t lend = ed - sd;
@@ -1233,7 +1241,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o)
 	//	out.Write8(0x1d);
 }
 
-bool wxUIProperty::Read_text(wxInputStream &_i)
+bool wxUIProperty::Read_text(wxInputStream &_i, wxString &ui_path)
 {
 	wxTextInputStream in(_i, "\n", wxConvAuto(wxFONTENCODING_UTF8));
 
@@ -1272,7 +1280,10 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	case IMAGE:
 	{
 		wxImage img;
-/*
+		img.LoadFile(ui_path + ".png", wxBITMAP_TYPE_PNG);
+		Set(img);
+		return ok;
+		/*
 //		wxPNGHandler().LoadFile(&img, _i, false);
 		size_t sz = in.Read32();
 		size_t spos = in.GetInputStream().TellI();
@@ -1294,9 +1305,14 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 		size_t epos = in.GetInputStream().TellI();
 		unsigned char *d;
 		d = (unsigned char*)malloc(sizeof(unsigned char)*sz);
+//		wxScopedCharBuffer *d;
+//		d = (wxScopedCharBuffer*)malloc(sizeof(wxScopedCharBuffer)*sz);
 		for (size_t i = 0; i < sz; i++)
 		{
-			d[i] = (unsigned char)(ar_str[i].mb_str().data());
+//			d[i] = (unsigned char)(ar_str[i].ToAscii().data());
+			d[i] = (unsigned char)(ar_str[i].To8BitData().data());
+			//			d[i] = (unsigned char)(ar_str[i].mb_str().data());
+			//			d[i] = (ar_str[i].To8BitData());
 		}
 		
 
@@ -1563,7 +1579,7 @@ bool wxUIObject::Read(wxInputStream &_i)
 	return in.Read8() == code;
 }
 
-void wxUIObject::Write_text(wxOutputStream &_o)
+void wxUIObject::Write_text(wxOutputStream &_o, wxString &ui_path)
 {
 	wxTextOutputStream out(_o, wxEOL_UNIX);
 	out.Write8(0xaf); // start code
@@ -1578,13 +1594,13 @@ void wxUIObject::Write_text(wxOutputStream &_o)
 	{
 		out.WriteString(m_properties[i].name);
 		out.PutChar(g_text_delimeter);
-		m_properties[i].prop->Write_text(_o);
+		m_properties[i].prop->Write_text(_o, ui_path + "_" + m_properties[i].name);
 	}
 
 //	out.Write8(0xaf);
 }
 
-bool wxUIObject::Read_text(wxInputStream &_i)
+bool wxUIObject::Read_text(wxInputStream &_i, wxString &ui_path)
 {
 	wxTextInputStream in(_i, "\n");
 //	wxUint8 code = in.Read8();
@@ -1598,7 +1614,7 @@ bool wxUIObject::Read_text(wxInputStream &_i)
 	for (size_t i = 0; i < n; i++)
 	{
 		wxString name = in.ReadWord();
-		ok = ok && Property(name).Read_text(_i);
+		ok = ok && Property(name).Read_text(_i, ui_path + "_" + name);
 	}
 
 	return ok;
@@ -2136,7 +2152,7 @@ bool wxUIFormData::Read(wxInputStream &_I)
 	return (in.Read8() == code && ok);
 }
 
-void wxUIFormData::Write_text(wxOutputStream &_O)
+void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 {
 	wxTextOutputStream out(_O, wxEOL_UNIX);
 
@@ -2157,13 +2173,13 @@ void wxUIFormData::Write_text(wxOutputStream &_O)
 	{
 		out.WriteString(m_objects[i]->GetTypeName());
 		out.PutChar(g_text_delimeter);
-		m_objects[i]->Write_text(_O);
+		m_objects[i]->Write_text(_O, ui_path + "_" + m_name);
 	}
 
 	//	out.Write8(0xd7);
 }
 
-bool wxUIFormData::Read_text(wxInputStream &_I)
+bool wxUIFormData::Read_text(wxInputStream &_I, wxString &ui_path)
 {
 	DeleteAll();
 
@@ -2182,7 +2198,7 @@ bool wxUIFormData::Read_text(wxInputStream &_I)
 	{
 		wxString type = in.ReadWord();
 		if (wxUIObject *obj = Create(type))
-			ok = ok && obj->Read_text(_I);
+			ok = ok && obj->Read_text(_I, ui_path + "_" + m_name);
 		else
 			ok = false;
 	}
