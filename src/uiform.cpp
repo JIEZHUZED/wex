@@ -1191,7 +1191,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 	//	out.Write8(0x1d);
 }
 
-bool wxUIProperty::Read_text(wxInputStream &_i, wxString &ui_path)
+bool wxUIProperty::Read_text(wxInputStream &_i)
 {
 	wxTextInputStream in(_i, "\n", wxConvAuto(wxFONTENCODING_UTF8));
 
@@ -1502,17 +1502,18 @@ void wxUIObject::Write_text(wxOutputStream &_o, wxString &ui_path)
 
 	out.Write32(m_properties.size());
 	out.PutChar(g_text_delimeter);
+	wxString obj_name = ui_path + "_" + GetName();
 	for (size_t i = 0; i < m_properties.size(); i++)
 	{
 		out.WriteString(m_properties[i].name);
 		out.PutChar(g_text_delimeter);
-		m_properties[i].prop->Write_text(_o, ui_path + "_" + GetName());
+		m_properties[i].prop->Write_text(_o, obj_name);
 	}
 
 //	out.Write8(0xaf);
 }
 
-bool wxUIObject::Read_text(wxInputStream &_i, wxString &ui_path)
+bool wxUIObject::Read_text(wxInputStream &_i)
 {
 	wxTextInputStream in(_i, "\n");
 //	wxUint8 code = in.Read8();
@@ -1526,7 +1527,7 @@ bool wxUIObject::Read_text(wxInputStream &_i, wxString &ui_path)
 	for (size_t i = 0; i < n; i++)
 	{
 		wxString name = in.ReadWord();
-		ok = ok && Property(name).Read_text(_i, ui_path + "_" + name);
+		ok = ok && Property(name).Read_text(_i);
 	}
 
 	return ok;
@@ -2091,14 +2092,11 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 	//	out.Write8(0xd7);
 }
 
-bool wxUIFormData::Read_text(wxInputStream &_I, wxString &ui_path)
+bool wxUIFormData::Read_text(wxInputStream &_I)
 {
 	DeleteAll();
 
 	wxTextInputStream in(_I, "\n");
-
-//	wxUint8 code = in.Read8();
-//	in.Read8(); // version
 
 	m_name = in.ReadWord();
 	m_width = in.Read32();
@@ -2110,13 +2108,12 @@ bool wxUIFormData::Read_text(wxInputStream &_I, wxString &ui_path)
 	{
 		wxString type = in.ReadWord();
 		if (wxUIObject *obj = Create(type))
-			ok = ok && obj->Read_text(_I, ui_path + "_" + m_name);
+			ok = ok && obj->Read_text(_I);
 		else
 			ok = false;
 	}
 
 	return ok;
-//	return (in.Read8() == code && ok);
 }
 
 // methods to create/edit UI objects
@@ -2584,9 +2581,9 @@ void wxUIFormEditor::OnLeftDown(wxMouseEvent &evt)
 				m_selected.clear();
 
 				// callback for single item selection
-				wxUIFormEvent evt(select_obj, wxEVT_UIFORM_SELECT, this->GetId());
-				evt.SetEventObject(this);
-				ProcessEvent(evt);
+				wxUIFormEvent _evt(select_obj, wxEVT_UIFORM_SELECT, this->GetId());
+				_evt.SetEventObject(this);
+				ProcessEvent(_evt);
 			}
 
 			m_selected.push_back(select_obj);

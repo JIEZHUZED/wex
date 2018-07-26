@@ -88,7 +88,7 @@ public:
 	bool Read(wxInputStream &);
 
 	void Write_text(wxOutputStream &, wxString &);
-	bool Read_text(wxInputStream &, wxString &);
+	bool Read_text(wxInputStream &);
 
 	void AddUpdateInterface(const wxString &name, wxUIPropertyUpdateInterface *pui);
 	void RemoveUpdateInterface(wxUIPropertyUpdateInterface *pui);
@@ -155,7 +155,7 @@ public:
 	virtual bool Read(wxInputStream &);
 
 	virtual void Write_text(wxOutputStream &, wxString &);
-	virtual bool Read_text(wxInputStream &, wxString &);
+	virtual bool Read_text(wxInputStream &);
 
 protected:
 	void AddProperty(const wxString &name, wxUIProperty *prop);
@@ -236,7 +236,7 @@ public:
 	virtual bool Read(wxInputStream &);
 
 	virtual void Write_text(wxOutputStream &, wxString &);
-	virtual bool Read_text(wxInputStream &, wxString &);
+	virtual bool Read_text(wxInputStream &);
 
 	// methods to create/edit UI objects
 	wxUIObject *Create(const wxString &type, const wxRect &geom, const wxString &name = wxEmptyString);
