@@ -1182,7 +1182,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 	{
 		wxImage img = GetImage();
 		img.SaveFile(ui_path + ".png", wxBITMAP_TYPE_PNG);
-		// write otu path?
+		out.WriteString(ui_path + ".png");
 		out.PutChar(g_text_delimeter);
 	}
 	break;
@@ -1230,7 +1230,8 @@ bool wxUIProperty::Read_text(wxInputStream &_i, wxString &ui_path)
 	case IMAGE:
 	{
 		wxImage img;
-		img.LoadFile(ui_path + ".png", wxBITMAP_TYPE_PNG);
+		wxString img_filename = in.ReadWord();
+		img.LoadFile(img_filename, wxBITMAP_TYPE_PNG);
 		Set(img);
 	}
 	break;
@@ -1505,7 +1506,7 @@ void wxUIObject::Write_text(wxOutputStream &_o, wxString &ui_path)
 	{
 		out.WriteString(m_properties[i].name);
 		out.PutChar(g_text_delimeter);
-		m_properties[i].prop->Write_text(_o, ui_path + "_" + m_properties[i].name);
+		m_properties[i].prop->Write_text(_o, ui_path + "_" + GetName());
 	}
 
 //	out.Write8(0xaf);
@@ -2084,7 +2085,7 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 	{
 		out.WriteString(m_objects[i]->GetTypeName());
 		out.PutChar(g_text_delimeter);
-		m_objects[i]->Write_text(_O, ui_path + "_" + m_name);
+		m_objects[i]->Write_text(_O, ui_path);
 	}
 
 	//	out.Write8(0xd7);
