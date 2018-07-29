@@ -1120,35 +1120,34 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 	wxTextOutputStream out(_o, wxEOL_UNIX);
 	wxString s = wxEmptyString;
 	int type = GetType();
-	//	out.Write8(0x1d);
 	out.Write16((wxUint16)type);
 	out.PutChar(g_text_delimeter);
 	switch (type)
 	{
-	case DOUBLE: 
+	case DOUBLE:
 	{
 		out.WriteDouble(GetDouble());
 		out.PutChar(g_text_delimeter);
 	}
 	break;
-	case BOOLEAN: 
+	case BOOLEAN:
 	{
 		out.Write8(GetBoolean() ? 1 : 0);
 		out.PutChar(g_text_delimeter);
 	}
 	break;
-	case INTEGER: 
+	case INTEGER:
 	{
 		out.Write32(GetInteger());
 		out.PutChar(g_text_delimeter);
 	}
 	break;
-	case STRING: 
+	case STRING:
 	{
 		s = GetString();
 		if (s.Len() > 0)
 			out.WriteString(s);
-		else 
+		else
 			out.WriteString(" ");
 		out.PutChar(g_text_delimeter);
 	}
@@ -1187,15 +1186,11 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 	}
 	break;
 	}
-
-	//	out.Write8(0x1d);
 }
 
 bool wxUIProperty::Read_text(wxInputStream &_i)
 {
 	wxTextInputStream in(_i, "\n", wxConvAuto(wxFONTENCODING_UTF8));
-
-//	wxUint8 code = in.Read8();
 	wxUint16 type = in.Read16();
 
 	bool ok = true;
@@ -1238,7 +1233,6 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	}
 
 	return ok;
-//	return (code == in.Read8());
 }
 
 
@@ -1494,8 +1488,6 @@ bool wxUIObject::Read(wxInputStream &_i)
 void wxUIObject::Write_text(wxOutputStream &_o, wxString &ui_path)
 {
 	wxTextOutputStream out(_o, wxEOL_UNIX);
-	out.Write8(0xaf); // start code
-	out.Write8(1); // version
 	out.PutChar(g_text_delimeter);
 	out.Write8(m_visible ? 1 : 0);
 	out.PutChar(g_text_delimeter);
@@ -1510,14 +1502,11 @@ void wxUIObject::Write_text(wxOutputStream &_o, wxString &ui_path)
 		m_properties[i].prop->Write_text(_o, obj_name);
 	}
 
-//	out.Write8(0xaf);
 }
 
 bool wxUIObject::Read_text(wxInputStream &_i)
 {
 	wxTextInputStream in(_i, "\n");
-//	wxUint8 code = in.Read8();
-	in.Read8(); // version
 
 	m_visible = in.Read8() != 0;
 
@@ -1531,7 +1520,6 @@ bool wxUIObject::Read_text(wxInputStream &_i)
 	}
 
 	return ok;
-//	return in.Read8() == code;
 }
 
 void wxUIObject::AddProperty(const wxString &name, wxUIProperty *prop)
@@ -2069,9 +2057,6 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 {
 	wxTextOutputStream out(_O, wxEOL_UNIX);
 
-	//	out.Write8(0xd7); // code
-	//	out.Write8(1); // version
-
 	out.WriteString(m_name);
 	out.PutChar(g_text_delimeter);
 	out.Write32(m_width);
@@ -2089,7 +2074,6 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 		m_objects[i]->Write_text(_O, ui_path);
 	}
 
-	//	out.Write8(0xd7);
 }
 
 bool wxUIFormData::Read_text(wxInputStream &_I)
