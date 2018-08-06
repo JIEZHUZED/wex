@@ -2066,12 +2066,27 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 
 	out.Write32(m_objects.size());
 	out.PutChar(g_text_delimeter);
-
+	// sort for consistent order in output for consistency
+	/*
 	for (size_t i = 0; i < m_objects.size(); i++)
 	{
 		out.WriteString(m_objects[i]->GetTypeName());
 		out.PutChar(g_text_delimeter);
 		m_objects[i]->Write_text(_O, ui_path);
+	}
+	*/
+	wxUIObject *o;
+	wxArrayString as = ListAll();
+	as.Sort();
+	for (size_t i = 0; i < as.Count(); i++)
+	{
+		o = Find(as[i]);
+		if (o != NULL)
+		{
+			out.WriteString(o->GetTypeName());
+			out.PutChar(g_text_delimeter);
+			o->Write_text(_O, ui_path);
+		}
 	}
 
 }
@@ -2153,6 +2168,14 @@ wxUIObject *wxUIFormData::Find(const wxString &name)
 			return m_objects[i];
 
 	return 0;
+}
+
+wxArrayString wxUIFormData::ListAll()
+{
+	wxArrayString list;
+	for (size_t i = 0; i < m_objects.size(); i++)
+		list.Add(m_objects[i]->GetName());
+	return list;
 }
 
 std::vector<wxUIObject*> wxUIFormData::GetObjects()

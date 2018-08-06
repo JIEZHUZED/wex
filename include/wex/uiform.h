@@ -249,6 +249,9 @@ public:
 	wxUIObject **GetObjects(size_t *n);
 	void Raise(wxUIObject *);
 
+	// to keep order when writing out forms 
+	wxArrayString ListAll();
+
 	// form properties
 	void SetName(const wxString &name);
 	wxString GetName();
