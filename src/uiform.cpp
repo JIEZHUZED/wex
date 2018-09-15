@@ -35,6 +35,7 @@
 #include <wx/txtstrm.h>
 #include <wx/mstream.h>
 #include <wx/sstream.h>
+#include <wx/filename.h>
 
 #include <wex/extgrid.h>
 #include <wex/label.h>
@@ -1119,6 +1120,7 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 {
 	wxTextOutputStream out(_o, wxEOL_UNIX);
 	wxString s = wxEmptyString;
+	size_t n = 0;
 	int type = GetType();
 	out.Write16((wxUint16)type);
 	out.PutChar(g_text_delimeter);
@@ -1145,10 +1147,17 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 	case STRING:
 	{
 		s = GetString();
-		if (s.Len() > 0)
-			out.WriteString(s);
-		else
-			out.WriteString(" ");
+		s.Replace("\r", "");
+		n = s.Len();
+		out.Write32((wxUint32)n);
+		if (n > 0)
+		{
+			out.PutChar(g_text_delimeter);
+			for (size_t i = 0; i < n; i++)
+			{
+				out.PutChar(s[i]);
+			}
+		}
 		out.PutChar(g_text_delimeter);
 	}
 	break;
@@ -1181,17 +1190,20 @@ void wxUIProperty::Write_text(wxOutputStream &_o, wxString &ui_path)
 	{
 		wxImage img = GetImage();
 		img.SaveFile(ui_path + ".png", wxBITMAP_TYPE_PNG);
-		out.WriteString(ui_path + ".png");
+		wxString fn = wxFileName(ui_path + ".png").GetName();
+		out.WriteString(fn + ".png");
 		out.PutChar(g_text_delimeter);
 	}
 	break;
 	}
 }
 
-bool wxUIProperty::Read_text(wxInputStream &_i)
+bool wxUIProperty::Read_text(wxInputStream &_i, wxString &ui_path)
 {
 	wxTextInputStream in(_i, "\n", wxConvAuto(wxFONTENCODING_UTF8));
 	wxUint16 type = in.Read16();
+	wxString s = wxEmptyString;
+	size_t n = 0;
 
 	bool ok = true;
 	if (m_pReference)
@@ -1205,7 +1217,16 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	case DOUBLE: Set(in.ReadDouble()); break;
 	case BOOLEAN: Set(in.Read8() != 0 ? true : false); break;
 	case INTEGER: Set((int)in.Read32()); break;
-	case STRING: Set(in.ReadWord()); break;
+	case STRING: 
+		n = in.Read32();
+		s.Clear();
+		if (n > 0)
+		{
+			for (size_t i = 0; i < n; i++)
+				s.Append(in.GetChar());
+		}
+		Set(s);
+		break;
 	case COLOUR:
 		r = in.Read8();
 		g = in.Read8();
@@ -1226,6 +1247,7 @@ bool wxUIProperty::Read_text(wxInputStream &_i)
 	{
 		wxImage img;
 		wxString img_filename = in.ReadWord();
+		img_filename = ui_path + img_filename;
 		img.LoadFile(img_filename, wxBITMAP_TYPE_PNG);
 		Set(img);
 	}
@@ -1504,7 +1526,7 @@ void wxUIObject::Write_text(wxOutputStream &_o, wxString &ui_path)
 
 }
 
-bool wxUIObject::Read_text(wxInputStream &_i)
+bool wxUIObject::Read_text(wxInputStream &_i, wxString &ui_path)
 {
 	wxTextInputStream in(_i, "\n");
 
@@ -1516,7 +1538,7 @@ bool wxUIObject::Read_text(wxInputStream &_i)
 	for (size_t i = 0; i < n; i++)
 	{
 		wxString name = in.ReadWord();
-		ok = ok && Property(name).Read_text(_i);
+		ok = ok && Property(name).Read_text(_i, ui_path);
 	}
 
 	return ok;
@@ -2067,14 +2089,14 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 	out.Write32(m_objects.size());
 	out.PutChar(g_text_delimeter);
 	// sort for consistent order in output for consistency
-	/*
+/*
 	for (size_t i = 0; i < m_objects.size(); i++)
 	{
 		out.WriteString(m_objects[i]->GetTypeName());
 		out.PutChar(g_text_delimeter);
 		m_objects[i]->Write_text(_O, ui_path);
 	}
-	*/
+*/	
 	wxUIObject *o;
 	wxArrayString as = ListAll();
 	as.Sort();
@@ -2091,7 +2113,7 @@ void wxUIFormData::Write_text(wxOutputStream &_O, wxString &ui_path)
 
 }
 
-bool wxUIFormData::Read_text(wxInputStream &_I)
+bool wxUIFormData::Read_text(wxInputStream &_I, wxString &ui_path)
 {
 	DeleteAll();
 
@@ -2107,7 +2129,7 @@ bool wxUIFormData::Read_text(wxInputStream &_I)
 	{
 		wxString type = in.ReadWord();
 		if (wxUIObject *obj = Create(type))
-			ok = ok && obj->Read_text(_I);
+			ok = ok && obj->Read_text(_I, ui_path);
 		else
 			ok = false;
 	}
@@ -2173,8 +2195,19 @@ wxUIObject *wxUIFormData::Find(const wxString &name)
 wxArrayString wxUIFormData::ListAll()
 {
 	wxArrayString list;
+	wxString obj_name;
 	for (size_t i = 0; i < m_objects.size(); i++)
-		list.Add(m_objects[i]->GetName());
+	{
+		obj_name = m_objects[i]->GetName();
+		// handle non-unique names
+		if (list.Index(obj_name, false) != wxNOT_FOUND)
+		{
+			obj_name += wxString::Format("%d", (int)i);
+			m_objects[i]->SetName(obj_name);
+		}
+		list.Add(obj_name);
+	}
+
 	return list;
 }
 
