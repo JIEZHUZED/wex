@@ -46,6 +46,10 @@
 #include <wex/easycurl.h>
 
 #include <unordered_map>
+
+#include <chrono>
+using namespace std::chrono;
+
 using std::unordered_map;
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 
@@ -366,6 +370,8 @@ END_EVENT_TABLE()
 
 bool wxEasyCurl::Get(const wxString &url, const wxString &msg, wxWindow *parent)
 {
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	
 	bool show_progress = !msg.IsEmpty();
 
 	SimpleCurlProgressDialog *pd = 0;
@@ -391,17 +397,34 @@ bool wxEasyCurl::Get(const wxString &url, const wxString &msg, wxWindow *parent)
 		SetEventHandler(pd, ID_MY_SIMPLE_CURL);
 	}
 
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+
+	duration<double> prestart = duration_cast<duration<double>>(t2 - t1);
+
 	Start(url);
+	high_resolution_clock::time_point t3 = high_resolution_clock::now();
+	duration<double> start_time = duration_cast<duration<double>>(t3 - t2);
 
 	bool ok = Wait(show_progress);
 
+	high_resolution_clock::time_point t4 = high_resolution_clock::now();
+	duration<double> wait_time = duration_cast<duration<double>>(t4 - t3);
+
+
 	if (pd) delete pd;
+
+	wxMessageBox(wxString::Format("Get: init %gs, start %gs, wait %gs", prestart.count(), start_time.count(), wait_time.count()));
 
 	return ok;
 }
 
 bool wxEasyCurl::Wait(bool yield)
 {
+	while (IsStarted() && !IsFinished())
+	{
+		// something
+	}
+	/*
 	while (1)
 	{
 		if (IsStarted() && !IsFinished())
@@ -411,7 +434,7 @@ bool wxEasyCurl::Wait(bool yield)
 		}
 		else break;
 	}
-
+	*/
 	return m_thread->FinishedOk();
 }
 
