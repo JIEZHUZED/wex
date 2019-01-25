@@ -1,0 +1,110 @@
+
+function cascade_bar( data, ymin, ymax, isplit )
+{	
+	width = 31;
+	n = #data;
+	xlabels = [];
+		
+	yprev = 0.0;
+	for( i=0;i<n;i++ )
+	{
+		label = data[i][0];
+		yval = data[i][1];
+		
+		if ( i==0 || isnan(yval) )
+			color = 'dark grey';
+		elseif ( yval < 0 )
+			color = [192,0,0];
+		else
+			color = [112,173,71];
+		
+		if ( i==0 || isnan(yval) )
+		{
+			yy = isnan(yval)?yprev:yval;			
+			plot( [i], [ yy ], {type='bar', 'thick'=width, color=color, series=label} );
+			yprev = yy;
+			annotate( sprintf( '%.0,',yy ), [i, yy], {color='dark grey', size=-1, align='center',dxdy=[0,-8]});
+		}
+		else
+		{
+			delta = yprev*0.01*yval;
+			plot( [i], [ -delta ], {type='bar', 'thick'=width, color=color, series=label, baseline=yprev+delta} );			
+						
+			ytxt = (yval<0) ? yprev : yprev+delta;
+			pm = (yval<0) ? '-' : '+';
+			annotate( sprintf( '%s %.1f %%', pm, abs(yval) ), [i, ytxt], {color='light grey', size=-2,align='center',dxdy=[0,-8]});			
+			yprev = yprev + delta;
+		}
+		
+		if ( i+1 == isplit )
+		{
+			ypos = ymin+(ymax-ymin)*0.75;
+			ydelt = (ymax-ymin)*0.2;
+			annotate( [i+0.5, ymax], [i+0.5, ymin], {type='line', color='light grey', zorder='back',size=3, style='solid' } );
+			annotate( [i+0.5, ypos+ydelt/2], [i+0.5+3.5, ypos+ydelt/2], 
+				{type='line', color='light grey', size=2, style='dot', arrow='filled' } );
+			annotate( [i+0.5, ypos+ydelt/2], [i+0.5-3.5, ypos+ydelt/2], 
+				{type='line', color='light grey', size=2, style='dot', arrow='filled' } );
+			annotate( 'Energy Model Review', [i+0.5-3.5, ypos+ydelt/2], {align='center', size=-1, dxdy=[0,-15]});
+			annotate( 'Actual Production & Proposed Improvements', [i+0.5+3.5, ypos+ydelt/2], {align='center', size=-1, dxdy=[0,-15]});
+				
+		}
+		
+		xlabels[i] = [ i, label ];
+		
+		if ( i < n-1 )
+			annotate( [i, yprev], [i+1,yprev], {zorder='back', style='dot', zorder='back', size=0, color='light grey'});
+		
+	}
+	
+	yp = 32;
+	ym = data[0][1];
+	rectcol = [235,235,255];
+	
+	/*
+	annotate( [0, ym], [n-0.25, 70], {type='rect', filled=true, color=rectcol, zorder='back'});
+	annotate( 'Turbine', [n-0.5,ym-70/2], {'align'='right'});
+	
+	annotate( 'Balance of System', [n-0.5, 95], {align='right'});
+	
+	annotate( [0,58], [n-0.25, 25],  {type='rect', filled=true, color=rectcol, zorder='back'});
+	annotate( 'Financial Costs', [n-0.5, 47],  {align='right'});
+	
+	annotate( 'OpEx', [n-0.5, 24],  {align='right'});
+	
+	annotate([ n, yp+1], [n,ym], {type='brace'});
+	annotate( 'FCR \\dot  CapEx / AEP_{net}', [n+0.75, 0.5*(yp+ym)]);
+	annotate([ n, 0], [n,yp-1], {type='brace'});
+	annotate( 'OpEx / AEP_{net}', [n+0.75, 0.5*(yp)]);
+	annotate( '+', [n+2, 0.5*( yp + ym/2) ], {size=5} );
+	*/
+	
+	axis('x1', {min=-1, 'max'=n, type='label', labels=xlabels, ticksizes=[0,0]});
+	axis('y1', {'min'=ymin, 'max'=ymax, label='Production at POI (MWh/yr)'});
+	//plotopt({ coarse=false,fine=false, legend=false, border=false, space=[0, 130], window=[750,450]});
+	plotopt( {coarse=false, title='Plant Capacity Validation & Improvement Opportunities Identified by Ensight', fine=false,legend=false,border=false, window=[850,500] } );
+	axis('y2', {show=false});
+	axis('y2', {show=false});
+	
+	if ( !plotopt( {textface='CMU Serif Upright Italic'} ) )
+		outln( 'could not set font face' );
+	plotout( 'waterfall.pdf' );
+}
+
+waterfall_data = [
+	[ 'Original model', 196007 ],
+	[ 'Loss assumptions', -1.9 ],
+	[ 'Revised model', nan() ],
+	[ 'Actual weather 2016-17', -0.7 ],
+	[ 'Weather corr. model', nan() ],
+	[ 'Site issues, mod. errors', -1.2 ],
+	[ 'Actual production', nan() ],
+	[ 'Limit maximum tilt', 0.3 ],
+	[ 'Wind stow settings', 0.4 ],
+	[ 'Inverter efficiency', 0.2 ],
+	[ 'Downtime response', 0.3 ],
+	[ 'DC health', 0.2 ],
+	[ 'Improved production', nan() ]
+];
+
+cascade_bar( waterfall_data, 180000, 200000, 6 );

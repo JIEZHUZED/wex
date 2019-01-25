@@ -400,6 +400,7 @@ wxPdfFontParserType1::ReadAFM(wxInputStream& afmFile)
     long nParam;
     long cc, width, boxHeight, glyphNumber;
     wxString weight;
+    bool hasGlyphNumbers = false;
 
     bool inHeader = true;
     bool inMetrics = false;
@@ -432,8 +433,8 @@ wxPdfFontParserType1::ReadAFM(wxInputStream& afmFile)
         }
         else if (code.IsSameAs(wxT("Weight")))
         {
-          wxString weight_tmp = param.Lower();
-          if (!hasStemV && (weight_tmp.IsSameAs(wxT("black")) || weight_tmp.IsSameAs(wxT("bold"))))
+          wxString weight = param.Lower();
+          if (!hasStemV && (weight.IsSameAs(wxT("black")) || weight.IsSameAs(wxT("bold"))))
           {
             fd.SetStemV(120);
           }
@@ -551,6 +552,7 @@ wxPdfFontParserType1::ReadAFM(wxInputStream& afmFile)
             }
             else if (token.IsSameAs(wxT("G"))) // Glyph number
             {
+              hasGlyphNumbers = true;
               param = tkz.GetNextToken(); // Number
               param.ToLong(&glyphNumber);
               dummy = tkz.GetNextToken(); // Semicolon
@@ -1214,7 +1216,7 @@ wxPdfFontParserType1::ReadPFM(wxInputStream& pfmFile)
   if (hdr.face != 0)
   {
     pfmFile.SeekI(hdr.face);
-    familyName = ReadString(pfmFile);
+    wxString familyName = ReadString(pfmFile);
   }
 
   wxString encodingScheme = (hdr.charset != 0) ? wxString(wxT("FontSpecific")) : wxString(wxT("AdobeStandardEncoding"));
@@ -1415,8 +1417,10 @@ wxPdfFontParserType1::GetPrivateDict(wxInputStream* stream, int start)
     bool found = false;
     wxString token = wxEmptyString;
     int limit = (int) stream->GetSize();
+    int offset;
     while(!found && stream->TellI() < limit)
     {
+      offset = stream->TellI();
       token = GetToken(stream);
       if (token.IsSameAs(wxT("eexec")))
       {
@@ -1424,6 +1428,7 @@ wxPdfFontParserType1::GetPrivateDict(wxInputStream* stream, int start)
       }
       else
       {
+        //stream->SeekI(offset);
         SkipToNextToken(stream);
       }
     }
@@ -2067,7 +2072,7 @@ wxPdfFontParserType1::ParseDict(wxInputStream* stream, int start, int length, bo
   stream->SeekI(start);
   while (!ready && stream->TellI() < limit)
   {
-    token = GetToken(stream);
+    wxString token = GetToken(stream);
     // Check for the keywords 'eexec' or 'closefile',
     // either of those terminates a section
     if (token.IsSameAs(wxT("eexec")) ||
@@ -2326,7 +2331,7 @@ wxPdfFontParserType1::ParseEncoding(wxInputStream* stream)
     while (true)
     {
       // Stop when next token is 'def' or ']'
-      ch = stream->Peek();
+      char ch = stream->Peek();
       if (ch == ']')
       {
         break;
@@ -2365,7 +2370,7 @@ wxPdfFontParserType1::ParseEncoding(wxInputStream* stream)
   }
   else
   {
-    token = GetToken(stream);
+    wxString token = GetToken(stream);
     if (token.IsSameAs(wxT("StandardEncoding"))   ||
         token.IsSameAs(wxT("ExpertEncoding"))     ||
         token.IsSameAs(wxT("ISOLatin1Encoding")))
@@ -2467,6 +2472,7 @@ wxPdfFontParserType1::ParseCharStrings(wxInputStream* stream)
 {
   long numGlyphs, n;
   wxString token;
+  bool notdefFound = false;
 
   token = GetToken(stream);
   token.ToLong(&numGlyphs);
@@ -2530,6 +2536,10 @@ wxPdfFontParserType1::ParseCharStrings(wxInputStream* stream)
         if (ok)
         {
           (*m_glyphWidthMap)[glyphName] = (wxUint16) width;
+        }
+        if (glyphName.IsSameAs(wxT("/.notdef")))
+        {
+          notdefFound = true;
         }
         stream->SeekI(binaryStart+binarySize);
       }

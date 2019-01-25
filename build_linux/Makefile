@@ -1,23 +1,19 @@
 VPATH = ../src/freetype/src/base ../src/freetype/src/cff ../src/freetype/src/cid ../src/freetype/src/psaux ../src/freetype/src/pshinter ../src/freetype/src/psnames ../src/freetype/src/raster ../src/freetype/src/sfnt ../src/freetype/src/smooth ../src/freetype/src/truetype ../src/freetype/src/type1 ../src/plot/qhull ../src/dview ../src/plot ../src/pdf ../src/clipper ../src
 
-LKLIB = lkuxwx3.a
 LKDIR = ../../lk
+LKLIB = lkuxwx3.a
+
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Wno-unknown-pragmas -Wno-strict-aliasing
-CFLAGS = -fPIC $(WARNINGS) $(EXTRA_WARN_FLAGS) -O2 `wx-config-3 --cflags` -I../include -I ../src/freetype/include -DFT2_BUILD_LIBRARY -DOPJ_STATIC -DFT_CONFIG_MODULES_H=\"slimftmodules.h\" -DFT_CONFIG_OPTIONS_H=\"slimftoptions.h\" -I $(LKDIR)/include
+CFLAGS = -fPIC -Wall -O2 `wx-config-3 --cflags` -I../include -I../src/freetype/include -DFT2_BUILD_LIBRARY -DOPJ_STATIC -DFT_CONFIG_MODULES_H=\"slimftmodules.h\" -DFT_CONFIG_OPTIONS_H=\"slimftoptions.h\" -I$(LKDIR)/include
 CXXFLAGS = -std=c++0x $(CFLAGS)
 OBJCXXFLAGS = -std=c++0x
 
 LIBNAME = wexuxwx3
 TARGET = ../$(LIBNAME).a
-
-# Warning overrides for 3rd party source files we can't fix easily
-geom.o merge.o poly.o poly2.o qset.o: EXTRA_WARN_FLAGS := -Wno-unused-but-set-variable
-ftbase.o: EXTRA_WARN_FLAGS := -Wno-unused-function
-pdffontmanager.o pdffontparsertruetype.o pdfkernel.o: EXTRA_WARN_FLAGS := -Wno-unused-variable
-
+	
 OBJECTS = \
+	rangeslider.o \
 	ftbase.o \
 	ftbbox.o \
 	ftbitmap.o \
@@ -25,7 +21,6 @@ OBJECTS = \
 	ftgasp.o \
 	ftglyph.o \
 	ftinit.o \
-	ftlcdfil.o \
 	ftstroke.o \
 	ftsynth.o \
 	ftsystem.o \
@@ -52,7 +47,6 @@ OBJECTS = \
 	tpdlg.o \
 	label.o \
 	exttext.o \
-	exttextstream.o \
 	radiochoice.o \
 	metro.o \
 	uiform.o \

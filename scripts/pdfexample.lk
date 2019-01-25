@@ -1,0 +1,54 @@
+
+pdfpage({border=18});
+pdftext( "Hello, pdf world!" );
+pdftext( 'hello, some more\nNextline' );
+pdfstyle( {size=7, face='CMU Serif Upright Italic'}); 
+pdfbar( [1, 5, -0.9, 2,3], ['one', 'two', 'NEG', 'three', 'four' ], 
+	{xlabel='Items', show_values=true, 
+		show_yaxis_ticks=true, title='simple super quick bar plot', 
+		ylabel='Value (mm)', width=200,height=150} );
+		
+pdfplotinit();
+p = peaks( 49 );
+plotopt({textface='Carlito'});
+contour( p.x, p.y, p.z, {'filled'=true, 'colormap'='parula','levels'=15 , decimals=2} );
+
+pdfplotdraw( 100, 72*3, 72*5, 72*3 );
+
+pdfplotinit();
+import 'waterfall_plot.lk';
+plotopt( {textface='Linden Hill'} );
+pdfplotdraw( 0.25*72, 6*72, 8*72, 5.5*72 );
+
+pdfpage({paper=[3.5*72,9.5*72]} );
+pdfmoveto(18,18);
+pdfstyle( { 
+// face='CMU Bright', 
+   col_sizes=[18,50,50,50,50], 
+	header_size=8, 
+	size=7.5, cell_align='right', header_align='left', 
+	header_line=true, grid_lines=true,table_border=true});
+pdftable( [
+	[ 'C1', 'HH', 'HHH', 'HHHH' ],
+	[ 1, 2, 3, 4 ],
+	[ 5, 6, 7, 8 ],
+	[ 9, 10, 11, 12 ],
+	[ 'Aron', 'Hillary', 'Peter', 'Rodger', 'Penryn' ] ] );
+	
+pdftext( '\nNew line here!' );
+text = '';
+for (i=0;i<25;i++)
+	text+=( 'lorem ipsum dolor' );
+
+pdforigin( 144, 144, 72, 512 );
+pdfstyle( {wrap_text=true, textsize=5} );
+pdftext( text );
+	
+pdfpage({paper=[5.5*72,5.5*72]} );
+pdfimage( 'guy.png', {width=72*5.5});
+pdfmoveto(  36, 4.5*72 );
+pdfstyle( {face='League Script Thin', size=35 } );
+pdftext('Below the guy' );
+	
+pdfwrite( 'test1.pdf' );
+browse('test1.pdf');

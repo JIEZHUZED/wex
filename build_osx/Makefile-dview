@@ -2,14 +2,13 @@ DVDIR = ../tools/dview
 VPATH = $(DVDIR)
 WEXLIB = ../wexosxwx3.a
 
-CC = gcc -mmacosx-version-min=10.9
-CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -g -I. -I../include -I../../lk/src/ `wx-config-3 --cflags`
+CC = gcc
+CXX = g++
+CFLAGS = -g -I. -I../include `wx-config-3 --cflags`
 CXXFLAGS = $(CFLAGS) 
 
-LDFLAGS =  -arch x86_64 `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
-OBJECTS = dview.o \
-	../../lk/src/sqlite3.o
+LDFLAGS = `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
+OBJECTS = dview.o
 TARGET = DView
 
 

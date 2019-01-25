@@ -114,7 +114,7 @@ function sensitivity_plot( data, baseline, label, units )
 	annotate( [baseline,0], [baseline,-0.5], {type='line', size=2, arrow='filled'});
 	annotate( 'Baseline ' + label + ' = ' + sprintf('%g ', baseline) + units, [baseline,-1], {align='center'});
 	
-	plotopt( {window=[700,400/5*n]} );
+	plotopt( {textface='Linden Hill', window=[700,400/5*n]} );
 }
 
 

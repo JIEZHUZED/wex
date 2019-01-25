@@ -1,5 +1,3 @@
-#include <vector>
-
 #include <wx/clipbrd.h>
 #include <wx/msw/ole/oleutils.h>
 
@@ -141,22 +139,11 @@ bool wxExcelAutomation::Show(bool b)
 	}
 }
 
-bool wxExcelAutomation::SaveClose(const wxString& file) {
-	if (!m_pdispExcelApp)
-	{
-		m_errStr = "Excel OLE not initialized.";
-		return false;
-	}
-	m_pdispExcelApp->CallMethod("ActiveWorkbook.SaveAs", file);
-	CloseWorkbookNoSave();
-	return true;
-}
-
 bool wxExcelAutomation::CloseAllNoSave()
 {
 	int count = 0;
 	bool ok = true;
-	while ( ((ok=WorkbookCount(count))!=0) && count > 0)
+	while ( (ok=WorkbookCount(count)) && count > 0)
 	{
 		if (!SetWorkbook(1))
 			return false;
@@ -188,11 +175,7 @@ bool wxExcelAutomation::OpenFile(const wxString &fn)
 
 	ClearArgs();
 	m_argList[0].SetName("Filename");
-	// automation error with "c:/", replace with "c:\\"
-	wxString str = fn;
-	str.Replace("c:/", "c:\\");
-	str.Replace("C:/", "C:\\");
-	m_argList[0] = str;
+	m_argList[0] = fn;
 
 	if (!books.Invoke("Open", DISPATCH_PROPERTYGET, m_retVal, 1, m_argList))
 	{
@@ -732,85 +715,6 @@ bool wxExcelAutomation::GetRangeValue(const wxString &range, wxString &val)
 		val = "";
 	else
 		val = m_retVal.GetString();
-
-	return true;
-}
-
-
-bool wxExcelAutomation::getUsedCellRange(int& row, int& col, wxArrayString& val)
-{
-	if (!m_pdispWorksheet)
-	{
-		m_errStr = "No active worksheet, cannot set cell";
-		return false;
-	}
-	wxAutomationObject raobj;
-	ClearArgs();
-
-	if (!m_pdispWorksheet->GetObject(raobj, "UsedRange"))
-	{
-		m_errStr = "Failed to access range UsedRange";
-		return false;
-	}
-
-	col = (int)raobj.GetProperty("Columns.Count").GetLong();
-	row = (int)raobj.GetProperty("Rows.Count").GetLong();
-
-	m_retVal.Clear();
-	m_retVal.GetType() == wxS("safearray");
-	raobj.SetConvertVariantFlags(wxOleConvertVariant_ReturnSafeArrays);
-	if (!raobj.Invoke("Value", DISPATCH_PROPERTYGET, m_retVal, 0, NULL))
-	{
-		m_errStr.Format("Could not get Value from UsedRange object");
-		return false;
-	}
-
-	SAFEARRAY* returnedData = dynamic_cast<wxVariantDataSafeArray*>(m_retVal.GetData())->GetValue();
-	VARIANT* data = static_cast<VARIANT*>(returnedData->pvData);
-
-	size_t maxRows = 0;
-	size_t maxCols = 0;
-	for (size_t c = 0; c < col; c++) {
-		size_t nRows = 0;
-		for (size_t r = 0; r < row; r++) {
-			if (data[row*c + r].vt != VT_EMPTY) nRows++;
-		}
-		if (nRows > 0) maxCols++;
-		maxRows = (maxRows >= nRows) ? maxRows : nRows;
-	}
-
-	// vals is column-major order
-	size_t dimRows = returnedData->rgsabound[1].cElements;
-	for (size_t c= 0; c < maxCols; c++) {
-		for (size_t r = 0; r < maxRows; r++) {
-			size_t rc = c*dimRows + r;
-			int type = data[rc].vt;
-			// string
-			if (type == VT_BSTR) {
-				int len = wcslen(data[rc].bstrVal);
-				char* str = new char[len + 1];
-				wcstombs(str, data[rc].bstrVal, len + 1);
-				wxString strVal(str);
-				delete[] str;
-				val.push_back(strVal);
-			}
-			// currency
-			else if (type == VT_CY) {
-				long long numVal = data[rc].cyVal.int64;
-				val.push_back(wxString::Format(wxT("%f"), (float)numVal / 10000.));
-			}
-			// 8 byte real
-			else if (type == VT_R8) {
-				double numVal = data[rc].dblVal;
-				val.push_back(wxString::Format(wxT("%f"), numVal));
-			}
-			else if (type == VT_EMPTY) {
-				val.push_back(wxEmptyString);
-			}
-		}
-	}
-	row = maxRows;
-	col = maxCols;
 
 	return true;
 }

@@ -24,10 +24,6 @@
 #include "wex/pdf/pdfarraytypes.h"
 #include "wex/pdf/pdfcffindex.h"
 
-const int NUM_STD_STRINGS = 391;
-
-const char SUBR_RETURN_OP = 11;
-
 // Forward declaration of internal classes
 class wxPdfCffFontObject;
 
@@ -117,6 +113,8 @@ protected:
   int CalcHints(wxInputStream* stream, int begin, int end, int globalBias, int localBias, wxPdfCffIndexArray& localSubIndex);
 
 private:
+  wxInputStream*        m_stream;              ///< the input stream
+
   wxPdfCffIndexArray*   m_globalSubrIndex;     ///< index of the global subroutines
 
   int                   m_charstringType;      ///< charstring type (distinguishes type 1 and type 2 font formats)
@@ -125,6 +123,7 @@ private:
   wxPdfCffFontObject*   m_args;                ///< argument stack
   int                   m_argCount;            ///< argument count
 
+  int                   m_globalBias;          ///< The bias for the global subroutines
   int                   m_numHints;            ///< Number of arguments to the stem operators in a subroutine calculated recursively
 
   wxPdfSortedArrayInt*  m_hGlobalSubrsUsed;    ///< A HashMap for keeping the Global subroutines used in the font

@@ -865,17 +865,17 @@ public:
     }
 
 	//IDispatch
-	STDMETHODIMP GetIDsOfNames(REFIID , OLECHAR** , unsigned int , LCID , DISPID* )
+	STDMETHODIMP GetIDsOfNames(REFIID r, OLECHAR** o, unsigned int i, LCID l, DISPID* d)
 	{ 
         return E_NOTIMPL;
     };
 
-	STDMETHODIMP GetTypeInfo(unsigned int , LCID , ITypeInfo** )
+	STDMETHODIMP GetTypeInfo(unsigned int i, LCID l, ITypeInfo** t)
 	{ 
         return E_NOTIMPL;
     };
 
-	STDMETHODIMP GetTypeInfoCount(unsigned int* )
+	STDMETHODIMP GetTypeInfoCount(unsigned int* i)
 	{ 
         return E_NOTIMPL;
     };
@@ -930,10 +930,10 @@ public:
 
     };
 
-	STDMETHODIMP Invoke(DISPID dispIdMember, REFIID , LCID ,
+	STDMETHODIMP Invoke(DISPID dispIdMember, REFIID riid, LCID lcid,
 						  WORD wFlags, DISPPARAMS * pDispParams,
-						  VARIANT * , EXCEPINFO * ,
-						  unsigned int * )
+						  VARIANT * pVarResult, EXCEPINFO * pExcepInfo,
+						  unsigned int * puArgErr)
 	{ 
 	    if (wFlags & (DISPATCH_PROPERTYGET | DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF))
             return E_NOTIMPL;
@@ -1004,14 +1004,14 @@ int wxActiveXEvent::ParamCount() const
 
 wxString wxActiveXEvent::ParamType(int idx)
 {
-    wxASSERT(idx >= 0 && idx < (int)m_params.GetCount());
+    wxASSERT(idx >= 0 && idx < m_params.GetCount());
 
     return m_params[idx].GetType();
 };
 
 wxString wxActiveXEvent::ParamName(int idx)
 {
-    wxASSERT(idx >= 0 && idx < (int)m_params.GetCount());
+    wxASSERT(idx >= 0 && idx < m_params.GetCount());
 
     return m_params[idx].GetName();
 };
@@ -1028,7 +1028,7 @@ wxVariant& wxActiveXEvent::operator[] (int idx)
 wxVariant& wxActiveXEvent::operator[] (wxString name)
 {
 	int i;
-    for ( i = 0; i < (int)m_params.GetCount(); i++)
+    for ( i = 0; i < m_params.GetCount(); i++)
     {
         if (name.CmpNoCase(m_params[i].GetName()) == 0)
             return m_params[i];
@@ -1036,7 +1036,7 @@ wxVariant& wxActiveXEvent::operator[] (wxString name)
 
     wxString err = "wxActiveXEvent::operator[] invalid name <" + name + ">";
     err += "\r\nValid Names = :\r\n";
-    for (i = 0; i < (int)m_params.GetCount(); i++)
+    for (i = 0; i < m_params.GetCount(); i++)
     {
         err += m_params[i].GetName();
         err += "\r\n";
@@ -1488,7 +1488,7 @@ void *wxActiveX::GetPropAsPointer(const wxString& name)
 // call methods
 VARIANT wxActiveX::CallMethod(MEMBERID name, VARIANTARG args[], int argc)
 {
-	DISPPARAMS pargs = {args, NULL, (UINT)argc, 0};
+	DISPPARAMS pargs = {args, NULL, argc, 0};
     VARIANT retVal;
     VariantInit(&retVal);
 
@@ -1562,8 +1562,8 @@ wxVariant wxActiveX::CallMethod(wxString name, wxVariant args[], int nargs)
 
     if (vargs)
     {
-        for (int j = 0; j < nargs; j++)
-            VariantClear(&vargs[j]);
+        for (int i = 0; i < nargs; i++)
+            VariantClear(&vargs[i]);
         delete [] vargs;
     };
 
@@ -1641,7 +1641,7 @@ static void PixelsToHimetric(SIZEL &sz)
 }
 
 
-void wxActiveX::OnSize(wxSizeEvent& )
+void wxActiveX::OnSize(wxSizeEvent& event)
 {
 	int w, h;
 	GetClientSize(&w, &h);
@@ -1672,7 +1672,7 @@ void wxActiveX::OnSize(wxSizeEvent& )
 		m_oleInPlaceObject->SetObjectRects(&posRect, &posRect);
 }
 
-void wxActiveX::OnPaint(wxPaintEvent& )
+void wxActiveX::OnPaint(wxPaintEvent& event)
 {
 	wxLogTrace(wxT(""),wxT("repainting activex win"));
 	wxPaintDC dc(this);
@@ -1718,7 +1718,7 @@ void wxActiveX::OnMouse(wxMouseEvent& event)
 	UINT msg = 0;
 	WPARAM wParam = 0;
 	LPARAM lParam = 0;
-//	LRESULT lResult = 0;
+	LRESULT lResult = 0;
 
 	if (event.m_metaDown) 
         wParam |= MK_CONTROL;
@@ -1793,13 +1793,13 @@ WXLRESULT wxActiveX::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam
     };
 };
 
-void wxActiveX::OnSetFocus(wxFocusEvent& )
+void wxActiveX::OnSetFocus(wxFocusEvent& event)
 {
 	if (m_oleInPlaceActiveObject.Ok()) 
         m_oleInPlaceActiveObject->OnFrameWindowActivate(TRUE);
 }
 
-void wxActiveX::OnKillFocus(wxFocusEvent& )
+void wxActiveX::OnKillFocus(wxFocusEvent& event)
 {
 	if (m_oleInPlaceActiveObject.Ok()) 
         m_oleInPlaceActiveObject->OnFrameWindowActivate(FALSE);
@@ -1833,29 +1833,29 @@ FrameSite::~FrameSite()
 
 //IDispatch
 
-HRESULT FrameSite::GetIDsOfNames(REFIID , OLECHAR ** , unsigned int ,
-								 LCID , DISPID * )
+HRESULT FrameSite::GetIDsOfNames(REFIID riid, OLECHAR ** rgszNames, unsigned int cNames,
+								 LCID lcid, DISPID * rgDispId)
 {
 	WXOLE_TRACE("IDispatch::GetIDsOfNames");
 	return E_NOTIMPL;
 }
 
-HRESULT FrameSite::GetTypeInfo(unsigned int , LCID , ITypeInfo ** )
+HRESULT FrameSite::GetTypeInfo(unsigned int iTInfo, LCID lcid, ITypeInfo ** ppTInfo)
 {
 	WXOLE_TRACE("IDispatch::GetTypeInfo");
 	return E_NOTIMPL;
 }
 
-HRESULT FrameSite::GetTypeInfoCount(unsigned int * )
+HRESULT FrameSite::GetTypeInfoCount(unsigned int * pcTInfo)
 {
 	WXOLE_TRACE("IDispatch::GetTypeInfoCount");
 	return E_NOTIMPL;
 }
 
-HRESULT FrameSite::Invoke(DISPID dispIdMember, REFIID , LCID ,
-						  WORD wFlags, DISPPARAMS * ,
-						  VARIANT * pVarResult, EXCEPINFO * ,
-						  unsigned int * )
+HRESULT FrameSite::Invoke(DISPID dispIdMember, REFIID riid, LCID lcid,
+						  WORD wFlags, DISPPARAMS * pDispParams,
+						  VARIANT * pVarResult, EXCEPINFO * pExcepInfo,
+						  unsigned int * puArgErr)
 {
 	WXOLE_TRACE("IDispatch::Invoke");
 
@@ -1946,7 +1946,7 @@ HRESULT FrameSite::GetWindow(HWND * phwnd)
 	return S_OK;
 }
 
-HRESULT FrameSite::ContextSensitiveHelp(BOOL )
+HRESULT FrameSite::ContextSensitiveHelp(BOOL fEnterMode)
 {
 	WXOLE_TRACE("IOleWindow::ContextSensitiveHelp");
 	return S_OK;
@@ -1970,13 +1970,13 @@ HRESULT FrameSite::RequestBorderSpace(LPCBORDERWIDTHS pborderwidths)
 	return INPLACE_E_NOTOOLSPACE;
 }
 
-HRESULT FrameSite::SetBorderSpace(LPCBORDERWIDTHS )
+HRESULT FrameSite::SetBorderSpace(LPCBORDERWIDTHS pborderwidths)
 {
 	WXOLE_TRACE("IOleInPlaceUIWindow::SetBorderSpace");
 	return S_OK;
 }
 
-HRESULT FrameSite::SetActiveObject(IOleInPlaceActiveObject *pActiveObject, LPCOLESTR )
+HRESULT FrameSite::SetActiveObject(IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
 	WXOLE_TRACE("IOleInPlaceUIWindow::SetActiveObject");
 
@@ -1989,38 +1989,38 @@ HRESULT FrameSite::SetActiveObject(IOleInPlaceActiveObject *pActiveObject, LPCOL
 
 //IOleInPlaceFrame
 
-HRESULT FrameSite::InsertMenus(HMENU , LPOLEMENUGROUPWIDTHS )
+HRESULT FrameSite::InsertMenus(HMENU hmenuShared, LPOLEMENUGROUPWIDTHS lpMenuWidths)
 {
 	WXOLE_TRACE("IOleInPlaceFrame::InsertMenus");
 	return S_OK;
 }
 
-HRESULT FrameSite::SetMenu(HMENU , HOLEMENU , HWND )
+HRESULT FrameSite::SetMenu(HMENU hmenuShared, HOLEMENU holemenu, HWND hwndActiveObject)
 {
 	WXOLE_TRACE("IOleInPlaceFrame::SetMenu");
 	return S_OK;
 }
 
-HRESULT FrameSite::RemoveMenus(HMENU )
+HRESULT FrameSite::RemoveMenus(HMENU hmenuShared)
 {
 	WXOLE_TRACE("IOleInPlaceFrame::RemoveMenus");
 	return S_OK;
 }
 
-HRESULT FrameSite::SetStatusText(LPCOLESTR )
+HRESULT FrameSite::SetStatusText(LPCOLESTR pszStatusText)
 {
 	WXOLE_TRACE("IOleInPlaceFrame::SetStatusText");
 	//((wxFrame*)wxGetApp().GetTopWindow())->GetStatusBar()->SetStatusText(pszStatusText);
 	return S_OK;
 }
 
-HRESULT FrameSite::EnableModeless(BOOL )
+HRESULT FrameSite::EnableModeless(BOOL fEnable)
 {
 	WXOLE_TRACE("IOleInPlaceFrame::EnableModeless");
 	return S_OK;
 }
 
-HRESULT FrameSite::TranslateAccelerator(LPMSG lpmsg, WORD )
+HRESULT FrameSite::TranslateAccelerator(LPMSG lpmsg, WORD wID)
 {
 	WXOLE_TRACE("IOleInPlaceFrame::TranslateAccelerator");
 	// TODO: send an event with this id
@@ -2107,13 +2107,13 @@ HRESULT FrameSite::GetWindowContext(IOleInPlaceFrame **ppFrame,
 	return S_OK;
 }
 
-HRESULT FrameSite::Scroll(SIZE )
+HRESULT FrameSite::Scroll(SIZE scrollExtent)
 {
 	WXOLE_TRACE("IOleInPlaceSite::Scroll");
 	return S_OK;
 }
 
-HRESULT FrameSite::OnUIDeactivate(BOOL )
+HRESULT FrameSite::OnUIDeactivate(BOOL fUndoable)
 {
 	WXOLE_TRACE("IOleInPlaceSite::OnUIDeactivate");
 	m_bUIActive = false;
@@ -2150,7 +2150,7 @@ HRESULT FrameSite::OnPosRectChange(LPCRECT lprcPosRect)
 
 //IOleInPlaceSiteEx
 
-HRESULT FrameSite::OnInPlaceActivateEx(BOOL * pfNoRedraw, DWORD )
+HRESULT FrameSite::OnInPlaceActivateEx(BOOL * pfNoRedraw, DWORD dwFlags)
 {
 	WXOLE_TRACE("IOleInPlaceSiteEx::OnInPlaceActivateEx");
 	OleLockRunning(m_window->m_ActiveX, TRUE, FALSE);
@@ -2159,7 +2159,7 @@ HRESULT FrameSite::OnInPlaceActivateEx(BOOL * pfNoRedraw, DWORD )
 	return S_OK;
 }
 
-HRESULT FrameSite::OnInPlaceDeactivateEx(BOOL )
+HRESULT FrameSite::OnInPlaceDeactivateEx(BOOL fNoRedraw)
 {
 	WXOLE_TRACE("IOleInPlaceSiteEx::OnInPlaceDeactivateEx");
     OleLockRunning(m_window->m_ActiveX, FALSE, FALSE);
@@ -2204,7 +2204,7 @@ const char *OleGetWhicMonikerStr(DWORD dwWhichMoniker)
     };
 };
 
-HRESULT FrameSite::GetMoniker(DWORD , DWORD ,
+HRESULT FrameSite::GetMoniker(DWORD dwAssign, DWORD dwWhichMoniker,
 							  IMoniker ** ppmk)
 {
 	WXOLE_TRACEOUT("IOleClientSite::GetMoniker(" << OleGetMonikerToStr(dwAssign) << ", " << OleGetWhicMonikerStr(dwWhichMoniker) << ")");
@@ -2243,7 +2243,7 @@ HRESULT FrameSite::ShowObject()
 	return S_OK;
 }
 
-HRESULT FrameSite::OnShowWindow(BOOL )
+HRESULT FrameSite::OnShowWindow(BOOL fShow)
 {
 	WXOLE_TRACE("IOleClientSite::OnShowWindow");
 	return S_OK;
@@ -2257,8 +2257,8 @@ HRESULT FrameSite::RequestNewObjectLayout()
 
 // IParseDisplayName
 
-HRESULT FrameSite::ParseDisplayName(IBindCtx *, LPOLESTR ,
-									ULONG *, IMoniker **)
+HRESULT FrameSite::ParseDisplayName(IBindCtx *pbc, LPOLESTR pszDisplayName,
+									ULONG *pchEaten, IMoniker **ppmkOut)
 {
 	WXOLE_TRACE("IParseDisplayName::ParseDisplayName");
 	return E_NOTIMPL;
@@ -2266,13 +2266,13 @@ HRESULT FrameSite::ParseDisplayName(IBindCtx *, LPOLESTR ,
 
 //IOleContainer
 
-HRESULT FrameSite::EnumObjects(DWORD , IEnumUnknown **)
+HRESULT FrameSite::EnumObjects(DWORD grfFlags, IEnumUnknown **ppenum)
 {
 	WXOLE_TRACE("IOleContainer::EnumObjects");
 	return E_NOTIMPL;
 }
 
-HRESULT FrameSite::LockContainer(BOOL )
+HRESULT FrameSite::LockContainer(BOOL fLock)
 {
 	WXOLE_TRACE("IOleContainer::LockContainer");
 	// TODO
@@ -2281,8 +2281,8 @@ HRESULT FrameSite::LockContainer(BOOL )
 
 //IOleItemContainer
 
-HRESULT FrameSite::GetObject(LPOLESTR pszItem, DWORD , 
-							 IBindCtx * , REFIID , void ** ppvObject)
+HRESULT FrameSite::GetObject(LPOLESTR pszItem, DWORD dwSpeedNeeded, 
+							 IBindCtx * pbc, REFIID riid, void ** ppvObject)
 {
 	WXOLE_TRACE("IOleItemContainer::GetObject");
 	if (pszItem == NULL) 
@@ -2294,8 +2294,8 @@ HRESULT FrameSite::GetObject(LPOLESTR pszItem, DWORD ,
 	return MK_E_NOOBJECT;
 }
 
-HRESULT FrameSite::GetObjectStorage(LPOLESTR pszItem, IBindCtx * , 
-									REFIID , void ** ppvStorage)
+HRESULT FrameSite::GetObjectStorage(LPOLESTR pszItem, IBindCtx * pbc, 
+									REFIID riid, void ** ppvStorage)
 {
 	WXOLE_TRACE("IOleItemContainer::GetObjectStorage");
 	if (pszItem == NULL) 
@@ -2333,16 +2333,16 @@ HRESULT FrameSite::LockInPlaceActive(BOOL fLock)
 	return S_OK;
 }
 
-HRESULT FrameSite::GetExtendedControl(IDispatch ** )
+HRESULT FrameSite::GetExtendedControl(IDispatch ** ppDisp)
 {
 	WXOLE_TRACE("IOleControlSite::GetExtendedControl");
 	return E_NOTIMPL;
 }
 
-HRESULT FrameSite::TransformCoords(POINTL * pPtlHimetric, POINTF * pPtfContainer, DWORD )
+HRESULT FrameSite::TransformCoords(POINTL * pPtlHimetric, POINTF * pPtfContainer, DWORD dwFlags)
 {
 	WXOLE_TRACE("IOleControlSite::TransformCoords");
-//	HRESULT hr = S_OK;
+	HRESULT hr = S_OK;
 
 	if (pPtlHimetric == NULL)
 		return E_INVALIDARG;
@@ -2354,14 +2354,14 @@ HRESULT FrameSite::TransformCoords(POINTL * pPtlHimetric, POINTF * pPtfContainer
 
 }
 
-HRESULT FrameSite::TranslateAccelerator(LPMSG , DWORD )
+HRESULT FrameSite::TranslateAccelerator(LPMSG pMsg, DWORD grfModifiers)
 {
 	WXOLE_TRACE("IOleControlSite::TranslateAccelerator");
 	// TODO: send an event with this id
 	return E_NOTIMPL;
 }
 
-HRESULT FrameSite::OnFocus(BOOL )
+HRESULT FrameSite::OnFocus(BOOL fGotFocus)
 {
 	WXOLE_TRACE("IOleControlSite::OnFocus");
 	return S_OK;
@@ -2375,8 +2375,8 @@ HRESULT FrameSite::ShowPropertyFrame()
 
 //IOleCommandTarget
 
-HRESULT FrameSite::QueryStatus(const GUID * , ULONG cCmds, 
-							   OLECMD * prgCmds, OLECMDTEXT * )
+HRESULT FrameSite::QueryStatus(const GUID * pguidCmdGroup, ULONG cCmds, 
+							   OLECMD * prgCmds, OLECMDTEXT * pCmdTet)
 {
 	WXOLE_TRACE("IOleCommandTarget::QueryStatus");
 	if (prgCmds == NULL) return E_INVALIDARG;
@@ -2394,9 +2394,9 @@ HRESULT FrameSite::QueryStatus(const GUID * , ULONG cCmds,
 	return S_OK;
 }
 
-HRESULT FrameSite::Exec(const GUID * , DWORD , 
-						DWORD , VARIANTARG * , 
-						VARIANTARG * )
+HRESULT FrameSite::Exec(const GUID * pguidCmdGroup, DWORD nCmdID, 
+						DWORD nCmdExecOpt, VARIANTARG * pVaIn, 
+						VARIANTARG * pVaOut)
 {
 	WXOLE_TRACE("IOleCommandTarget::Exec");
 	bool bCmdGroupFound = false;
@@ -2407,18 +2407,18 @@ HRESULT FrameSite::Exec(const GUID * , DWORD ,
 
 //IAdviseSink
 
-void STDMETHODCALLTYPE FrameSite::OnDataChange(FORMATETC * , STGMEDIUM * )
+void STDMETHODCALLTYPE FrameSite::OnDataChange(FORMATETC * pFormatEtc, STGMEDIUM * pgStgMed)
 {
 	WXOLE_TRACE("IAdviseSink::OnDataChange");
 }
 
-void STDMETHODCALLTYPE FrameSite::OnViewChange(DWORD , LONG )
+void STDMETHODCALLTYPE FrameSite::OnViewChange(DWORD dwAspect, LONG lIndex)
 {
 	WXOLE_TRACE("IAdviseSink::OnViewChange");
 	// redraw the control
 }
 
-void STDMETHODCALLTYPE FrameSite::OnRename(IMoniker * )
+void STDMETHODCALLTYPE FrameSite::OnRename(IMoniker * pmk)
 {
 	WXOLE_TRACE("IAdviseSink::OnRename");
 }

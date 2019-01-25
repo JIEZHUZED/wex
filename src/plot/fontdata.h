@@ -9384,13 +9384,12 @@ struct font_data
   unsigned char *data;
   unsigned int len;
   const char *face;
-  const char *family;
   int bold;
   int italic;
 };
 
 font_data builtinfonts[] = {
-  { computermodernsansserif, computermodernsansserif_len, "Default", "Default", 0, 0 },
-  { 0, 0, 0, 0, 0, 0 }
+  { computermodernsansserif, computermodernsansserif_len, "CMU Bright", 0, 0 },
+  { 0, 0, 0, 0, 0 }
 };
 

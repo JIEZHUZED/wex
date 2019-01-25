@@ -32,7 +32,7 @@ colors = [
 	[112, 48, 160 ],
 	[  71, 36, 105 ] ];
 sector( sectors ,  inner, {suffix=' %', colors=colors, border=0});
-plotopt( {showaxes=false, border=0, pdffontface='ComputerModernSerif'});
+plotopt( {textface='Linden Hill', showaxes=false, border=0, pdffontface='ComputerModernSerif'});
 plotout( 'sectordemo.pdf' );
 
 /*

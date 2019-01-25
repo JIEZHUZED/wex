@@ -52,9 +52,10 @@ for( i=0;i<#cols;i++ )
 			ibin++;
 	}
 		
-	plot( binx, biny, {'type'='bar', 'thick'=1, 'color'=colors[mod(i,#colors)], 'series'=cols[i]});	
+	plot( binx, biny, {'type'='bar', 'thick'=4, 'color'=colors[mod(i,#colors)], 'series'=cols[i]});	
 }
 
 axis('x1', { 'min'=axmin-0.05*(axmax-axmin), 'max' = axmax+0.05*(axmax-axmin), 'label'='LCOE (\\cent /kWh)' });
 axis('y1', {'min'=0, 'max'=ymax*1.05, 'label'='Frequency'});
 plotopt({'legendpos'='right', 'coarse'=false, 'fine'=false, 'title'='Stochastic LCOE distributions'});
+plotout( 'hist.pdf' );
